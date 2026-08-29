@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7A9D54"/>
+      <stop offset="100%" stop-color="#4A7856"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E9EDC9"/>
+      <stop offset="100%" stop-color="#DDE5B6"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#1B2E1B" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Background Badge with Rounded Shape -->
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)" filter="url(#shadow)"/>
+
+  <!-- Mountain Peak Silhouette in Background -->
+  <polygon points="12,50 32,24 52,50" fill="#3D6446" opacity="0.6"/>
+  <polygon points="26,50 42,32 58,50" fill="#315238" opacity="0.8"/>
+  <polygon points="28,30 32,24 36,30 34,32 32,30 30,32" fill="#E8E4D9" opacity="0.9"/>
+
+  <!-- Earth / Base Mound -->
+  <ellipse cx="32" cy="52" rx="20" ry="5" fill="#315238"/>
+
+  <!-- Sprout Stem -->
+  <path d="M32,50 C32,40 31,34 32,23" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- Left Leaf -->
+  <path d="M32,34 C22,33 16,23 23,17 C30,17 32,26 32,34 Z" fill="url(#leafGrad)"/>
+  <path d="M32,34 C26,30 23,24 23,17" stroke="#7A9D54" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.7"/>
+
+  <!-- Right Leaf -->
+  <path d="M32,27 C36,18 47,15 48,23 C48,31 38,32 32,27 Z" fill="#FFFFFF"/>
+  <path d="M32,27 C38,24 43,21 48,23" stroke="#7A9D54" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+  <!-- Tiny Sun Sparkle in Top Corner -->
+  <circle cx="48" cy="14" r="2.5" fill="#FFE169"/>
+</svg>
