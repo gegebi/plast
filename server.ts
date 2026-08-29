@@ -177,7 +177,7 @@ app.post('/api/analyze-recycling', async (req, res) => {
 5. 토큰 절약을 위해 간결하고 명확한 한국어로 작성하십시오.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.7-flash',
+      model: 'gemini-2.5-flash',
       contents: [
         {
           role: 'user',
@@ -198,7 +198,7 @@ app.post('/api/analyze-recycling', async (req, res) => {
         responseMimeType: 'application/json',
         responseSchema: recyclingAnalysisSchema,
         temperature: 0.1,
-        maxOutputTokens: 300, // Token budget optimization
+        maxOutputTokens: 300,
       }
     });
 

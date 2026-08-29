@@ -30,6 +30,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [showFlash, setShowFlash] = useState<boolean>(false);
   const [showSampleSelector, setShowSampleSelector] = useState<boolean>(false);
@@ -41,6 +42,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const startCamera = async () => {
     try {
       setCameraError(null);
+      setCapturedPreview(null);
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -61,6 +63,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch(() => {});
       }
       setIsCameraActive(true);
     } catch (err: unknown) {
@@ -80,43 +83,76 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     };
   }, [facingMode]);
 
+  // Spacebar trigger for taking photos
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        // Prevent default spacebar scrolling
+        e.preventDefault();
+        if (!isProcessing && isCameraActive && !showSampleSelector && !capturedPreview) {
+          captureAndAnalyze();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProcessing, isCameraActive, showSampleSelector, capturedPreview, selectedCategory]);
+
   // Flip camera between back/front
   const toggleCamera = () => {
+    if (isProcessing) return;
     playSound('click');
     setFacingMode(prev => (prev === 'environment' ? 'user' : 'environment'));
   };
 
-  // Capture current live frame and execute algorithmic pixel analysis
+  // Capture current live frame, FREEZE it immediately, and analyze only the static snapshot
   const captureAndAnalyze = async (sourceElement?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement, customUri?: string) => {
-    setIsProcessing(true);
     playSound('shutter');
     setShowFlash(true);
     setTimeout(() => setShowFlash(false), 200);
 
     try {
       let captureUri = '';
-      let targetSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement;
+      let targetCanvas: HTMLCanvasElement;
 
-      if (sourceElement) {
-        targetSource = sourceElement;
-        captureUri = customUri || '';
-      } else if (videoRef.current && canvasRef.current) {
+      if (sourceElement instanceof HTMLImageElement) {
+        captureUri = customUri || sourceElement.src;
+        targetCanvas = document.createElement('canvas');
+        targetCanvas.width = sourceElement.naturalWidth || sourceElement.width || 480;
+        targetCanvas.height = sourceElement.naturalHeight || sourceElement.height || 480;
+        const ctx = targetCanvas.getContext('2d');
+        if (ctx) ctx.drawImage(sourceElement, 0, 0, targetCanvas.width, targetCanvas.height);
+      } else if (videoRef.current) {
         const video = videoRef.current;
-        const canvas = canvasRef.current;
+        // 1. Immediately pause the live camera video stream so no subsequent movement is captured
+        try {
+          video.pause();
+        } catch (e) {
+          console.warn('Video pause error', e);
+        }
+
+        const canvas = canvasRef.current || document.createElement('canvas');
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          captureUri = canvas.toDataURL('image/jpeg', 0.9);
+          captureUri = canvas.toDataURL('image/jpeg', 0.85);
         }
-        targetSource = video;
+        targetCanvas = canvas;
       } else {
         throw new Error('촬영 대상 소스가 없습니다.');
       }
 
-      // Execute multimodal Gemini Vision AI analysis (with local vision fallback)
-      const result = await analyzeRecyclingImageWithAI(targetSource, selectedCategory);
+      // 2. Immediately freeze and display the exact captured still photo
+      setCapturedPreview(captureUri);
+      setIsProcessing(true);
+
+      // 3. Send ONLY the frozen static canvas snapshot to AI
+      const result = await analyzeRecyclingImageWithAI(targetCanvas, selectedCategory);
 
       // Determine finalized category (if AI auto-detected or specific)
       const finalCategory: ItemCategory = result.detectedCategory || (selectedCategory === 'auto' ? 'general_plastic' : selectedCategory);
@@ -124,12 +160,18 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       // Trigger scan completed callback
       setTimeout(() => {
         onScanComplete(result, captureUri, finalCategory);
-      }, 500);
+      }, 300);
 
     } catch (err) {
       console.error('Analysis error:', err);
-      alert('이미지 분석 중 오류가 발생했습니다.');
+      alert('이미지 분석 중 오류가 발생했습니다. 다시 시도해주세요.');
       setIsProcessing(false);
+      setCapturedPreview(null);
+      if (videoRef.current) {
+        try {
+          videoRef.current.play();
+        } catch (e) {}
+      }
     }
   };
 
@@ -170,16 +212,17 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         <div className="text-center">
           <div className="flex items-center justify-center gap-1.5 text-xs font-extrabold text-[#2D3319] bg-[#DDE5B6] px-3.5 py-1 rounded-full border border-[#CCD5AE] shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-[#4A7856] fill-[#4A7856]" />
-            <span>Gemini Vision AI 오염도 판별</span>
+            <span>Gemini Vision AI 초고속 판별</span>
           </div>
           <p className="text-[11px] text-white/80 mt-1">
-            배경 분리 & 물체 인식 • 실시간 카메라 즉시 촬영
+            {capturedPreview ? '📸 촬영된 정지 사진 분석 중' : '실시간 프레임 캡처 & 배경 분리 판정'}
           </p>
         </div>
 
         <button
           onClick={toggleCamera}
-          className="p-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors"
+          disabled={isProcessing}
+          className="p-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors disabled:opacity-30"
         >
           <RefreshCw className="w-5 h-5" />
         </button>
@@ -187,18 +230,38 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
       {/* Main Viewfinder Section */}
       <div className="relative flex-1 flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Real-time Video Stream */}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
-          onLoadedMetadata={() => setIsCameraActive(true)}
-        />
+        {/* If photo captured, freeze and show EXACT captured photo */}
+        {capturedPreview ? (
+          <div className="relative w-full h-full flex items-center justify-center bg-black">
+            <img
+              src={capturedPreview}
+              alt="Captured Frame"
+              className="w-full h-full object-cover"
+            />
+            {/* Laser Scan Line Overlay on captured still photo */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <motion.div
+                initial={{ y: '0%' }}
+                animate={{ y: ['0%', '100%', '0%'] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-full h-1 bg-gradient-to-r from-transparent via-[#80ED99] to-transparent shadow-[0_0_15px_#80ED99]"
+              />
+            </div>
+          </div>
+        ) : (
+          /* Real-time Video Stream */
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
+            onLoadedMetadata={() => setIsCameraActive(true)}
+          />
+        )}
 
         {/* Camera Permission / Error Fallback Screen */}
-        {!isCameraActive && (
+        {!isCameraActive && !capturedPreview && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#F9F7F2] text-[#3C4030]">
             <div className="w-16 h-16 rounded-3xl bg-[#E9EDC9] border border-[#DDE5B6] flex items-center justify-center text-[#4A7856] mb-3">
               <Camera className="w-8 h-8" />
@@ -244,21 +307,25 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
             {/* Live Inspection Sensor HUD Label */}
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/85 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#7A9D54]/50 text-[11px] font-sans text-white flex items-center gap-1.5">
               <span>{currentCategoryInfo.icon}</span>
-              <span>{selectedCategory === 'auto' ? 'AI 품목 자동 감지 & 오염도 판별 중' : `${currentCategoryInfo.label} 감지 중`}</span>
+              <span>
+                {capturedPreview
+                  ? '📸 정지 사진 캡처 완료 • AI 판독 진행'
+                  : (selectedCategory === 'auto' ? 'AI 품목 자동 감지 & 오염도 판별' : `${currentCategoryInfo.label} 감지 중`)}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Processing Indicator */}
         {isProcessing && (
-          <div className="absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
-            <div className="w-14 h-14 rounded-full border-4 border-[#7A9D54] border-t-transparent animate-spin" />
-            <div className="flex items-center gap-1.5 text-sm font-bold text-white animate-pulse">
-              <Sparkles className="w-4 h-4 text-[#FDE047]" />
-              <span>Gemini Vision AI가 배경을 분리하고 오염도를 정밀 분석 중...</span>
+          <div className="absolute inset-0 z-40 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center gap-3 p-6 text-center">
+            <div className="w-14 h-14 rounded-full border-4 border-[#80ED99] border-t-transparent animate-spin" />
+            <div className="flex items-center gap-2 text-sm font-bold text-white">
+              <Sparkles className="w-4 h-4 text-[#FDE047] animate-bounce" />
+              <span>촬영된 사진을 AI가 정밀 분석 중입니다...</span>
             </div>
-            <p className="text-xs text-white/70 max-w-xs">
-              식탁 색상, 그림자, 조명 반사를 걸러내고 실제 용기 청결도를 판별합니다.
+            <p className="text-xs text-white/80 max-w-xs leading-relaxed">
+              방금 찍은 스냅샷에서 배경을 분리하고 용기 오염도를 평가하고 있습니다.
             </p>
           </div>
         )}
@@ -305,33 +372,42 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         </div>
 
         {/* Shutter Button Action */}
-        <div className="flex items-center justify-center gap-5 sm:gap-6">
-          <button
-            onClick={() => setShowSampleSelector(true)}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white text-xs border border-white/20 active:scale-95 transition-transform"
-            title="샘플 이미지로 테스트"
-          >
-            🧪
-          </button>
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center justify-center gap-5 sm:gap-6">
+            <button
+              onClick={() => setShowSampleSelector(true)}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white text-xs border border-white/20 active:scale-95 transition-transform"
+              title="샘플 이미지로 테스트"
+            >
+              🧪
+            </button>
 
-          {/* Big Mechanical Shutter Trigger */}
-          <button
-            disabled={isProcessing}
-            onClick={() => captureAndAnalyze()}
-            className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-[#E9EDC9]/30 p-1 flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
-          >
-            <div className="w-full h-full rounded-full bg-[#7A9D54] hover:bg-[#4A7856] flex items-center justify-center border-3 sm:border-4 border-white shadow-md">
-              <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-            </div>
-          </button>
+            {/* Big Mechanical Shutter Trigger */}
+            <button
+              disabled={isProcessing}
+              onClick={() => captureAndAnalyze()}
+              className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-[#E9EDC9]/30 p-1 flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
+              title="촬영하기 (스페이스바)"
+            >
+              <div className="w-full h-full rounded-full bg-[#7A9D54] hover:bg-[#4A7856] flex items-center justify-center border-3 sm:border-4 border-white shadow-md">
+                <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+              </div>
+            </button>
 
-          <button
-            onClick={toggleCamera}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white border border-white/20 active:scale-95 transition-transform"
-            title="카메라 전환"
-          >
-            <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
+            <button
+              onClick={toggleCamera}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white border border-white/20 active:scale-95 transition-transform"
+              title="카메라 전환"
+            >
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+
+          {/* Spacebar hotkey hint badge */}
+          <div className="flex items-center gap-1 text-[11px] text-white/60 font-sans mt-0.5">
+            <kbd className="px-1.5 py-0.5 rounded-md bg-white/20 text-white font-mono text-[10px] border border-white/30 shadow-xs">Space</kbd>
+            <span>키를 눌러 바로 촬영</span>
+          </div>
         </div>
       </div>
 
