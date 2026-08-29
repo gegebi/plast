@@ -62,8 +62,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Top Header */}
       <header className="relative z-10 max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-[#7A9D54] rounded-full flex items-center justify-center shadow-md border-2 border-white">
-            <span className="text-white font-black text-xl font-sans">P</span>
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-[#7A9D54] flex items-center justify-center">
+            <img src="/favicon.svg" alt="Plast Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="flex items-center gap-2">

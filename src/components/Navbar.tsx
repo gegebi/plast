@@ -40,8 +40,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
-            <div className="w-11 h-11 bg-[#7A9D54] rounded-full flex items-center justify-center shadow-md border-2 border-white group-hover:scale-105 transition-transform">
-              <span className="text-white font-black text-lg font-sans">P</span>
+            <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-md border-2 border-white group-hover:scale-105 transition-transform bg-[#7A9D54] flex items-center justify-center">
+              <img src="/favicon.svg" alt="Plast Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="flex items-center gap-2">
