@@ -138,7 +138,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Trophy className="w-6 h-6 text-[#E2B842]" />
-              <h3 className="text-2xl font-serif italic font-bold text-[#2D3319]">
+              <h3 className="text-2xl font-sans font-extrabold text-[#2D3319]">
                 산(Mountain) 리그 랭킹
               </h3>
             </div>

@@ -63,11 +63,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <header className="relative z-10 max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-[#7A9D54] rounded-full flex items-center justify-center shadow-md border-2 border-white">
-            <span className="text-white font-bold text-xl font-serif">P</span>
+            <span className="text-white font-black text-xl font-sans">P</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#2D3319] font-['Plus_Jakarta_Sans']">
+              <h1 className="text-2xl font-black tracking-tight text-[#2D3319] font-sans">
                 Plast
               </h1>
               <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold">
@@ -112,7 +112,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <span>실시간 카메라 분리수거 에코 포레스트</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif italic text-[#2D3319] tracking-tight leading-[1.2] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-sans font-extrabold text-[#2D3319] tracking-tight leading-[1.25] mb-6">
             깨끗한 분리수거로 <br />
             <span className="text-[#4A7856] underline decoration-[#DDE5B6] decoration-wavy decoration-2">
               남산에서 에베레스트까지
@@ -120,7 +120,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             나만의 산을 일구세요
           </h1>
 
-          <p className="text-sm sm:text-base text-[#6B705C] max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="text-sm sm:text-base text-[#6B705C] max-w-2xl mx-auto leading-relaxed mb-10 font-medium">
             엽떡통과 플라스틱을 깨끗이 씻어 <strong>실시간 카메라</strong>로 인증하세요.
             <br />
             무결점 세척 시 <strong>새 묘목🌱</strong>이 심어지고, 오염물이 남으면 <strong>나무가 베어집니다🪓</strong>.
@@ -171,8 +171,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* 4 Core Pillars Grid */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-serif italic font-bold text-[#2D3319]">Plast 게임 핵심 메커니즘</h2>
-          <p className="text-xs sm:text-sm text-[#8C8F7A] mt-1">친환경 실천과 게임의 유기적 결합</p>
+          <h2 className="text-2xl font-sans font-extrabold text-[#2D3319]">Plast 게임 핵심 메커니즘</h2>
+          <p className="text-xs sm:text-sm text-[#8C8F7A] mt-1 font-medium">친환경 실천과 게임의 유기적 결합</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -180,7 +180,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-[#E9EDC9] flex items-center justify-center text-[#4A7856] mb-3 border border-[#DDE5B6]">
               <Camera className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-sm text-[#2D3319] mb-1">실시간 날것(Raw) 촬영</h3>
+            <h3 className="font-extrabold text-sm text-[#2D3319] mb-1 font-sans">실시간 날것(Raw) 촬영</h3>
             <p className="text-xs text-[#6B705C] leading-relaxed">
               갤러리 예전 사진 업로드를 방지하고, 지금 이 순간의 날것 그대로 즉시 촬영하여 정직하게 인증합니다.
             </p>
@@ -190,7 +190,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-[#CCD5AE] flex items-center justify-center text-[#4A5D23] mb-3 border border-[#B5C99A]">
               <Zap className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-sm text-[#2D3319] mb-1">픽셀 비전 오염도 측정</h3>
+            <h3 className="font-extrabold text-sm text-[#2D3319] mb-1 font-sans">픽셀 비전 오염도 측정</h3>
             <p className="text-xs text-[#6B705C] leading-relaxed">
               외부 무거운 AI 대신 브라우저 캔버스 픽셀 알고리즘으로 엽떡 고추기름과 이물질을 즉시 감지합니다.
             </p>
@@ -200,7 +200,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-[#DDE5B6] flex items-center justify-center text-[#7A9D54] mb-3 border border-[#CCD5AE]">
               <Sun className="w-6 h-6 text-[#E2B842]" />
             </div>
-            <h3 className="font-bold text-sm text-[#2D3319] mb-1">광합성 시너지 가속</h3>
+            <h3 className="font-extrabold text-sm text-[#2D3319] mb-1 font-sans">광합성 시너지 가속</h3>
             <p className="text-xs text-[#6B705C] leading-relaxed">
               숲에 건강한 나무가 많을수록 광합성 시너지가 발동되어 묘목 성장 속도가 배수로 빨라집니다.
             </p>
@@ -210,7 +210,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-[#E9EDC9] flex items-center justify-center text-[#4A7856] mb-3 border border-[#DDE5B6]">
               <Mountain className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-sm text-[#2D3319] mb-1">산 형성 & 리그 랭킹</h3>
+            <h3 className="font-extrabold text-sm text-[#2D3319] mb-1 font-sans">산 형성 & 리그 랭킹</h3>
             <p className="text-xs text-[#6B705C] leading-relaxed">
               50그루 남산 ➡️ 100그루 한라산 ➡️ 200그루 지리산 ➡️ 300그루 설악산 순서로 리그를 승급하며 랭킹 1위에 도전하세요!
             </p>
@@ -222,8 +222,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="relative z-10 max-w-5xl mx-auto px-6 py-12 border-t border-[#E8E4D9]">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6">
           <div>
-            <h2 className="text-2xl font-serif italic font-bold text-[#2D3319]">🏔️ 정복 가능한 6대 산 리그</h2>
-            <p className="text-xs text-[#8C8F7A] mt-0.5">나무를 가꿔 더 높은 봉우리로 도약하세요</p>
+            <h2 className="text-2xl font-sans font-extrabold text-[#2D3319]">🏔️ 정복 가능한 6대 산 리그</h2>
+            <p className="text-xs text-[#8C8F7A] mt-0.5 font-medium">나무를 가꿔 더 높은 봉우리로 도약하세요</p>
           </div>
           <span className="text-xs text-[#4A5D23] font-bold bg-[#DDE5B6] px-3.5 py-1.5 rounded-full border border-[#CCD5AE]">
             총 6단계 리그 시스템
@@ -239,7 +239,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 className="p-4 rounded-3xl bg-white/80 border border-[#E8E4D9] flex flex-col items-center text-center shadow-xs hover:border-[#7A9D54] transition-all"
               >
                 <div className="text-2xl mb-1.5">🏔️</div>
-                <h4 className="font-bold text-sm text-[#2D3319] font-serif">{m.name}</h4>
+                <h4 className="font-bold text-sm text-[#2D3319] font-sans">{m.name}</h4>
                 <span className="text-[11px] font-mono text-[#7A9D54] font-bold">{m.altitude}m</span>
                 <div className="mt-2 text-[10px] bg-[#F9F7F2] border border-[#E8E4D9] px-2 py-0.5 rounded-full text-[#6B705C] font-semibold">
                   {m.requiredTrees}그루 달성
@@ -260,9 +260,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           >
             <div className="text-center mb-5">
               <div className="w-14 h-14 mx-auto rounded-full bg-[#7A9D54] text-white flex items-center justify-center text-2xl mb-3 shadow-md border-2 border-white">
-                <span className="font-serif font-bold">P</span>
+                <span className="font-black font-sans">P</span>
               </div>
-              <h3 className="text-xl font-bold text-[#2D3319] mb-1 font-serif">
+              <h3 className="text-xl font-extrabold text-[#2D3319] mb-1 font-sans">
                 Plast 계정 시작하기
               </h3>
               <p className="text-xs text-[#8C8F7A]">

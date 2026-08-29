@@ -41,11 +41,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
           >
             <div className="w-11 h-11 bg-[#7A9D54] rounded-full flex items-center justify-center shadow-md border-2 border-white group-hover:scale-105 transition-transform">
-              <span className="text-white font-bold text-lg font-serif">P</span>
+              <span className="text-white font-black text-lg font-sans">P</span>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-xl tracking-tight text-[#2D3319] font-['Plus_Jakarta_Sans']">
+                <h1 className="font-extrabold text-xl tracking-tight text-[#2D3319] font-sans">
                   Plast
                 </h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold uppercase tracking-wider">

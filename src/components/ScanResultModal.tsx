@@ -63,7 +63,7 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
             )}
           </div>
 
-          <h3 className="text-2xl font-serif italic font-bold text-[#2D3319] mb-1">
+          <h3 className="text-2xl font-sans font-extrabold text-[#2D3319] mb-1">
             {result.feedbackTitle}
           </h3>
           <p className="text-xs sm:text-sm text-[#6B705C] max-w-sm mx-auto leading-relaxed">

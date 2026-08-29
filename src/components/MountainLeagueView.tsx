@@ -46,7 +46,7 @@ export const MountainLeagueView: React.FC<MountainLeagueViewProps> = ({
         <div className="flex items-start justify-between mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-serif italic font-bold text-[#2D3319]">
+              <h3 className="text-2xl font-sans font-extrabold text-[#2D3319]">
                 🏔️ 산(Mountain) 리그 시스템
               </h3>
               <span className="px-3 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] text-xs font-bold border border-[#CCD5AE]">
@@ -72,7 +72,7 @@ export const MountainLeagueView: React.FC<MountainLeagueViewProps> = ({
               <span className="text-[11px] uppercase tracking-widest font-bold opacity-85">
                 현재 활동 중인 산 리그
               </span>
-              <h3 className="text-2xl sm:text-3xl font-serif font-bold mt-0.5">
+              <h3 className="text-2xl sm:text-3xl font-sans font-extrabold mt-0.5">
                 {currentMountain.name} ({currentMountain.altitude.toLocaleString()}m)
               </h3>
               <p className="text-xs opacity-90 mt-1 max-w-md leading-relaxed">
@@ -154,7 +154,7 @@ export const MountainLeagueView: React.FC<MountainLeagueViewProps> = ({
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-[#2D3319] font-serif">
+                        <span className="font-extrabold text-sm text-[#2D3319] font-sans">
                           {league.name}
                         </span>
                         <span className="text-xs font-mono text-[#8C8F7A]">

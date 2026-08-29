@@ -43,7 +43,7 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xl font-serif font-bold text-[#2D3319]">{user.nickname}</h3>
+                <h3 className="text-xl font-sans font-extrabold text-[#2D3319]">{user.nickname}</h3>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold border border-[#CCD5AE]">
                   {currentMountain.name} 리그
                 </span>

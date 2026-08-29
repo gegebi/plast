@@ -62,7 +62,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
               <div className="w-20 h-20 mx-auto rounded-3xl bg-[#E9EDC9] border border-[#CCD5AE] flex items-center justify-center text-4xl mb-4 shadow-sm">
                 🍲 ➡️ 🌱
               </div>
-              <h3 className="text-xl font-serif italic font-bold text-[#2D3319] mb-2">
+              <h3 className="text-xl font-sans font-extrabold text-[#2D3319] mb-2">
                 깨끗한 분리수거 = 나무가 자라요!
               </h3>
               <p className="text-xs sm:text-sm text-[#6B705C] leading-relaxed mb-6">
@@ -86,7 +86,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
               <div className="w-20 h-20 mx-auto rounded-3xl bg-[#E9EDC9] border border-[#CCD5AE] flex items-center justify-center text-4xl mb-4 shadow-sm">
                 🏔️ 🌲
               </div>
-              <h3 className="text-xl font-serif italic font-bold text-[#2D3319] mb-2">
+              <h3 className="text-xl font-sans font-extrabold text-[#2D3319] mb-2">
                 50그루가 모이면 남산 완성!
               </h3>
               <p className="text-xs sm:text-sm text-[#6B705C] leading-relaxed mb-6">
@@ -113,7 +113,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
               <span className="text-xs font-bold text-[#4A5D23] px-3.5 py-1 rounded-full bg-[#DDE5B6] border border-[#CCD5AE] inline-block mb-2 shadow-xs">
                 환영 선물 증정 🎁
               </span>
-              <h3 className="text-xl font-serif italic font-bold text-[#2D3319] mb-2">
+              <h3 className="text-xl font-sans font-extrabold text-[#2D3319] mb-2">
                 {userNickname}님께 첫 묘목을 드립니다!
               </h3>
               <p className="text-xs sm:text-sm text-[#6B705C] leading-relaxed mb-6">
