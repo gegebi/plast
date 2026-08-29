@@ -158,6 +158,27 @@ export const firestoreService = {
     );
   },
 
+  async deleteTree(userId: string, treeId: string): Promise<void> {
+    const path = `users/${userId}/trees/${treeId}`;
+    try {
+      await deleteDoc(doc(db, 'users', userId, 'trees', treeId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+    }
+  },
+
+  async deleteMultipleTrees(userId: string, treeIds: string[]): Promise<void> {
+    try {
+      const promises = treeIds.map(treeId => {
+        const path = `users/${userId}/trees/${treeId}`;
+        return deleteDoc(doc(db, 'users', userId, 'trees', treeId));
+      });
+      await Promise.all(promises);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `users/${userId}/trees`);
+    }
+  },
+
   // --- Recycling Records ---
   async addRecord(userId: string, record: RecyclingRecord): Promise<void> {
     const path = `users/${userId}/records/${record.id}`;

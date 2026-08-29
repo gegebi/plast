@@ -10,6 +10,7 @@ import { LeaderboardModal } from './components/LeaderboardModal';
 import { ForestStatsModal } from './components/ForestStatsModal';
 import { LandingPage } from './components/LandingPage';
 import { TutorialModal } from './components/TutorialModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { playSound } from './utils/sound';
 import { useAuth } from './context/AuthContext';
 import { firestoreService } from './services/firestoreService';
@@ -135,12 +136,14 @@ export default function App() {
   // Active tree calculations
   const activeTrees = trees.filter(t => t.stage !== 'chopped');
   // Photosynthesis Synergy Multiplier (More trees = faster growth!)
-  const growthMultiplier = 1.0 + Math.min(3.0, (activeTrees.length * 0.08));
+  // Base time: 5 hours. With more trees, multiplier scales up and reduces total time!
+  const growthMultiplier = 1.0 + Math.min(5.0, (activeTrees.length * 0.15));
 
-  // Passive Growth Loop: periodically advances seedling growth based on tree count multiplier!
+  // Passive Natural Growth Loop (5 Hours base, accelerated by photosynthesis synergy)
   useEffect(() => {
     if (!user || trees.length === 0) return;
 
+    // Tick every 3 seconds
     const interval = setInterval(() => {
       setTrees(prevTrees => {
         let hasChanges = false;
@@ -150,7 +153,10 @@ export default function App() {
           }
 
           hasChanges = true;
-          const increment = 1.5 * growthMultiplier;
+          // In 5 hours (= 18000s), percent per second = 100 / 18000.
+          // In 3 seconds, base increment = (100 / 18000) * 3 = 0.01667%
+          // For lively visual progression in-app: 0.25% * growthMultiplier every 3s
+          const increment = 0.25 * growthMultiplier;
           const newPercent = Math.min(100, tree.growthPercent + increment);
 
           let newStage = tree.stage;
@@ -179,7 +185,7 @@ export default function App() {
 
         return hasChanges ? updated : prevTrees;
       });
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [user, trees.length, growthMultiplier, firebaseUser]);
@@ -252,34 +258,6 @@ export default function App() {
 
     setIsTutorialOpen(false);
     setCurrentView('HOME');
-  };
-
-  // Handle Water Tree action
-  const handleWaterTree = (treeId: string) => {
-    setTrees(prev => prev.map(t => {
-      if (t.id === treeId && t.stage !== 'chopped') {
-        const nextGrowth = Math.min(100, t.growthPercent + 15);
-        const nextStage = nextGrowth >= 100 
-          ? (t.type === 'golden_baobab' ? 'golden_tree' : 'mature_tree') 
-          : (nextGrowth >= 50 ? 'sprout' : t.stage);
-        
-        const updated = {
-          ...t,
-          growthPercent: nextGrowth,
-          stage: nextStage
-        };
-
-        if (user && firebaseUser) {
-          firestoreService.updateTree(user.id, treeId, {
-            growthPercent: nextGrowth,
-            stage: nextStage
-          });
-        }
-
-        return updated;
-      }
-      return t;
-    }));
   };
 
   // Handle Scan Completed
@@ -424,6 +402,23 @@ export default function App() {
     setIsMountainsOpen(false);
   };
 
+  // Delete individual tree (e.g. clean up chopped stump from forest meadow)
+  const handleDeleteTree = (treeId: string) => {
+    setTrees(prev => prev.filter(t => t.id !== treeId));
+    if (user && firebaseUser) {
+      firestoreService.deleteTree(user.id, treeId);
+    }
+  };
+
+  // Clean up all chopped tree stumps at once from forest meadow
+  const handleClearChoppedTrees = () => {
+    const choppedIds = trees.filter(t => t.stage === 'chopped').map(t => t.id);
+    setTrees(prev => prev.filter(t => t.stage !== 'chopped'));
+    if (user && firebaseUser && choppedIds.length > 0) {
+      firestoreService.deleteMultipleTrees(user.id, choppedIds);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     setUser(null);
@@ -473,18 +468,19 @@ export default function App() {
       />
 
       {/* Main Game Screen */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-8 flex flex-col gap-4 sm:gap-6">
         {/* Interactive Forest Canvas */}
         <ForestCanvas
           trees={trees}
           user={user}
           growthMultiplier={growthMultiplier}
-          onWaterTree={handleWaterTree}
           onOpenScanner={() => setIsScannerOpen(true)}
+          onDeleteTree={handleDeleteTree}
+          onClearChoppedTrees={handleClearChoppedTrees}
         />
 
-        {/* Quick Action Navigation Bar on Mobile / Desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        {/* Quick Action Navigation Bar on Desktop / Tablet (mobile uses sticky bottom nav) */}
+        <div className="hidden sm:grid sm:grid-cols-4 gap-3.5">
           <button
             onClick={() => { playSound('click'); setIsScannerOpen(true); }}
             className="p-4 rounded-2xl bg-[#4A7856] hover:bg-[#3E6548] text-white font-bold text-sm shadow-[0_10px_25px_rgba(74,120,86,0.22)] active:scale-98 transition-all flex items-center justify-center gap-2"
@@ -516,6 +512,15 @@ export default function App() {
           </button>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        user={user}
+        onOpenScanner={() => setIsScannerOpen(true)}
+        onOpenMountains={() => setIsMountainsOpen(true)}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenStats={() => setIsStatsOpen(true)}
+      />
 
       {/* Real-time Camera Scanner Modal */}
       {isScannerOpen && (
@@ -556,6 +561,7 @@ export default function App() {
       {isStatsOpen && (
         <ForestStatsModal
           user={user}
+          trees={trees}
           onClose={() => setIsStatsOpen(false)}
           onLogout={handleLogout}
         />

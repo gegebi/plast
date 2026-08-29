@@ -4,7 +4,12 @@
   body {
     background-color: #F9F7F2;
     color: #3C4030;
+    -webkit-tap-highlight-color: transparent;
   }
+}
+
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
 /* Custom scrollbar for natural tones */

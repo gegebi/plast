@@ -256,19 +256,19 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       </div>
 
       {/* Bottom Category Selector & Shutter Control Bar */}
-      <div className="relative z-20 bg-gradient-to-t from-black via-black/95 to-black/80 px-4 py-4 sm:px-6 pb-8 border-t border-white/10">
+      <div className="relative z-20 bg-gradient-to-t from-black via-black/95 to-black/80 px-3 py-3 sm:px-6 pb-6 sm:pb-8 border-t border-white/10">
         {/* Category Horizontal Chips */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-white/70 font-medium">인증할 품목 선택</span>
+        <div className="mb-3 sm:mb-4">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[11px] sm:text-xs text-white/70 font-medium">인증할 품목 선택</span>
             <button
               onClick={() => setShowSampleSelector(true)}
-              className="text-[11px] text-[#DDE5B6] hover:text-white underline font-semibold"
+              className="text-[10px] sm:text-[11px] text-[#DDE5B6] hover:text-white underline font-semibold"
             >
               🧪 샘플 테스트 모드
             </button>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
@@ -278,7 +278,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
                     playSound('click');
                     setSelectedCategory(cat.id);
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-all ${
                     isSelected
                       ? 'bg-[#7A9D54] text-white font-bold shadow-md shadow-[#7A9D54]/40 scale-105'
                       : 'bg-white/15 text-white/90 hover:bg-white/25'
@@ -290,16 +290,16 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               );
             })}
           </div>
-          <p className="text-[11px] text-[#DDE5B6] mt-1.5 text-center">
+          <p className="text-[10px] sm:text-[11px] text-[#DDE5B6] mt-1 text-center truncate">
             💡 {currentCategoryInfo.hint}
           </p>
         </div>
 
         {/* Shutter Button Action */}
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-5 sm:gap-6">
           <button
             onClick={() => setShowSampleSelector(true)}
-            className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white text-xs border border-white/20"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white text-xs border border-white/20 active:scale-95 transition-transform"
             title="샘플 이미지로 테스트"
           >
             🧪
@@ -309,19 +309,19 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           <button
             disabled={isProcessing}
             onClick={() => captureAndAnalyze()}
-            className="relative w-20 h-20 rounded-full bg-[#E9EDC9]/30 p-1.5 flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
+            className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-[#E9EDC9]/30 p-1 flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
           >
-            <div className="w-full h-full rounded-full bg-[#7A9D54] hover:bg-[#4A7856] flex items-center justify-center border-4 border-white shadow-md">
-              <Camera className="w-8 h-8 text-white" />
+            <div className="w-full h-full rounded-full bg-[#7A9D54] hover:bg-[#4A7856] flex items-center justify-center border-3 sm:border-4 border-white shadow-md">
+              <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
             </div>
           </button>
 
           <button
             onClick={toggleCamera}
-            className="w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white border border-white/20"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white border border-white/20 active:scale-95 transition-transform"
             title="카메라 전환"
           >
-            <RefreshCw className="w-5 h-5" />
+            <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>

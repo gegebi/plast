@@ -1,18 +1,20 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { UserProfile, RecyclingRecord } from '../types';
+import { UserProfile, RecyclingRecord, TreeItem } from '../types';
 import { MOUNTAIN_LEAGUES } from '../data/mountains';
-import { TreePine, Flame, Award, Trash2, Calendar, X, RefreshCw, LogOut, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { TreePine, Flame, Award, Trash2, Calendar, X, RefreshCw, LogOut, CheckCircle2, AlertTriangle, ShieldCheck, Sprout, Axe } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 interface ForestStatsModalProps {
   user: UserProfile;
+  trees?: TreeItem[];
   onClose: () => void;
   onLogout: () => void;
 }
 
 export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
   user,
+  trees = [],
   onClose,
   onLogout
 }) => {
@@ -20,11 +22,19 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
   const totalCarbonKg = (user.carbonSavedGrams / 1000).toFixed(2);
 
   const cleanRecordsCount = user.history.filter(h => h.verdict === 'PLANT_SEEDLING').length;
+  const choppedRecordsCount = user.history.filter(h => h.verdict === 'CHOP_TREE').length;
   const totalScansCount = user.history.length;
   const successRate = totalScansCount > 0 ? Math.round((cleanRecordsCount / totalScansCount) * 100) : 100;
 
+  const totalGrown = user.totalTreesGrownAllTime;
+  const totalChopped = user.totalTreesChopped || 0;
+  const activeTreesInMeadow = trees.filter(t => t.stage !== 'chopped').length;
+  const matureTreesInMeadow = trees.filter(t => t.stage === 'mature_tree' || t.stage === 'golden_tree').length;
+  const growingTreesInMeadow = trees.filter(t => t.stage !== 'chopped' && t.growthPercent < 100).length;
+  const stumpsInMeadow = trees.filter(t => t.stage === 'chopped').length;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -60,31 +70,101 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
           </button>
         </div>
 
-        {/* Environmental Impact Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6 text-center">
-          <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[10px] text-[#8C8F7A] block font-medium">총 심은 나무</span>
-            <span className="text-lg font-bold text-[#4A7856] font-mono">
-              {user.totalTreesGrownAllTime}그루
+        {/* 4 Core Metric Impact Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5 text-center">
+          <div className="bg-white border border-[#CCD5AE] p-3 rounded-2xl shadow-xs">
+            <span className="text-[10px] text-[#4A5D23] block font-extrabold flex items-center justify-center gap-1">
+              <span>🌱</span> 총 키운 묘목
+            </span>
+            <span className="text-xl font-black text-[#2D6A4F] font-mono mt-0.5 block">
+              {totalGrown}그루
             </span>
           </div>
+
+          <div className="bg-rose-50/70 border border-rose-200 p-3 rounded-2xl shadow-xs">
+            <span className="text-[10px] text-rose-700 block font-extrabold flex items-center justify-center gap-1">
+              <span>🪓</span> 총 벌목된 묘목
+            </span>
+            <span className="text-xl font-black text-rose-600 font-mono mt-0.5 block">
+              {totalChopped}그루
+            </span>
+          </div>
+
           <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[10px] text-[#8C8F7A] block font-medium">탄소 저감량</span>
-            <span className="text-lg font-bold text-[#7A9D54] font-mono">
+            <span className="text-[10px] text-[#8C8F7A] block font-bold">탄소 저감량</span>
+            <span className="text-lg font-bold text-[#7A9D54] font-mono mt-0.5 block">
               {totalCarbonKg}kg
             </span>
           </div>
+
           <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[10px] text-[#8C8F7A] block font-medium">연속 인증</span>
-            <span className="text-lg font-bold text-[#E2B842] font-mono flex items-center justify-center gap-1">
+            <span className="text-[10px] text-[#8C8F7A] block font-bold">연속 인증</span>
+            <span className="text-lg font-bold text-[#E2B842] font-mono mt-0.5 flex items-center justify-center gap-1">
               <Flame className="w-4 h-4 fill-[#E2B842] text-[#E2B842]" /> {user.recyclingStreakDays}일
             </span>
           </div>
-          <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[10px] text-[#8C8F7A] block font-medium">세척 성공률</span>
-            <span className="text-lg font-bold text-[#4A7856] font-mono">
-              {successRate}%
+        </div>
+
+        {/* Detailed Forest & Tree Ecology Breakdown Card */}
+        <div className="mb-5 bg-white rounded-2xl border border-[#E8E4D9] p-4 shadow-xs">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-extrabold text-[#2D3319] uppercase tracking-wider flex items-center gap-1.5">
+              <span>🌲 묘목 & 생태 통계 리포트</span>
+            </h4>
+            <span className="text-[11px] font-bold text-[#4A7856] bg-[#E9EDC9] px-2.5 py-0.5 rounded-full border border-[#DDE5B6]">
+              세척 성공률 {successRate}%
             </span>
+          </div>
+
+          {/* Grown vs Chopped Visual Ratio Bar */}
+          <div className="space-y-1.5 mb-3">
+            <div className="flex justify-between text-[11px] font-bold">
+              <span className="text-[#2D6A4F] flex items-center gap-1">
+                <span>🌱 키운 묘목</span> <strong>{totalGrown}그루</strong>
+              </span>
+              <span className="text-rose-600 flex items-center gap-1">
+                <span>🪓 벌목된 묘목</span> <strong>{totalChopped}그루</strong>
+              </span>
+            </div>
+            <div className="w-full h-3 bg-rose-200 rounded-full overflow-hidden flex">
+              <div
+                className="h-full bg-gradient-to-r from-[#52B788] to-[#2D6A4F] transition-all duration-500"
+                style={{
+                  width: `${(totalGrown + totalChopped) > 0 ? (totalGrown / (totalGrown + totalChopped)) * 100 : 100}%`
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Sub-grid of detailed tree stats */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-[#F8F9FA] p-2.5 rounded-xl border border-[#E9ECEF] flex items-center justify-between">
+              <span className="text-[#6B705C] flex items-center gap-1">
+                <span>🌳</span> 완전 성장 성목
+              </span>
+              <span className="font-extrabold text-[#2D3319]">{matureTreesInMeadow}그루</span>
+            </div>
+
+            <div className="bg-[#F8F9FA] p-2.5 rounded-xl border border-[#E9ECEF] flex items-center justify-between">
+              <span className="text-[#6B705C] flex items-center gap-1">
+                <span>🌿</span> 현재 자라는 묘목
+              </span>
+              <span className="font-extrabold text-[#2D3319]">{growingTreesInMeadow}그루</span>
+            </div>
+
+            <div className="bg-[#F8F9FA] p-2.5 rounded-xl border border-[#E9ECEF] flex items-center justify-between">
+              <span className="text-[#6B705C] flex items-center gap-1">
+                <span>🍃</span> 풀밭 내 총 생존
+              </span>
+              <span className="font-extrabold text-[#4A7856]">{activeTreesInMeadow}그루</span>
+            </div>
+
+            <div className="bg-rose-50/50 p-2.5 rounded-xl border border-rose-100 flex items-center justify-between">
+              <span className="text-rose-700 flex items-center gap-1">
+                <span>🪵</span> 풀밭 잔여 그루터기
+              </span>
+              <span className="font-extrabold text-rose-700">{stumpsInMeadow}그루</span>
+            </div>
           </div>
         </div>
 
@@ -100,7 +180,7 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
               아직 인증된 분리수거 기록이 없습니다.
             </div>
           ) : (
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
               {user.history.slice(0, 10).map((record) => (
                 <div
                   key={record.id}
@@ -133,7 +213,7 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
                   <span className={`text-[11px] font-bold ${
                     record.verdict === 'PLANT_SEEDLING' ? 'text-[#4A7856]' : 'text-rose-600'
                   }`}>
-                    {record.verdict === 'PLANT_SEEDLING' ? '+1 묘목' : '-1 벌목'}
+                    {record.verdict === 'PLANT_SEEDLING' ? '+1 묘목 심기' : '-1 나무 벌목'}
                   </span>
                 </div>
               ))}
@@ -167,3 +247,4 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
     </div>
   );
 };
+

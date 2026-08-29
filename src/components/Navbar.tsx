@@ -75,13 +75,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Forest Status & Tree Counter */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Growth Multiplier (More trees = faster growth!) */}
           <div 
             title="나무가 많을수록 광합성 시너지로 성장 속도가 증가합니다!"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/80 border border-[#E8E4D9] text-[#3C4030] text-xs font-medium shadow-xs"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-white/80 border border-[#E8E4D9] text-[#3C4030] text-[11px] sm:text-xs font-medium shadow-xs"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#7A9D54] animate-spin" style={{ animationDuration: '6s' }} />
+            <Sparkles className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#7A9D54] animate-spin" style={{ animationDuration: '6s' }} />
             <span className="font-bold text-[#2D3319]">x{growthMultiplier.toFixed(1)}</span>
             <span className="hidden lg:inline text-[#8C8F7A]">성장 부스트</span>
           </div>
@@ -89,15 +89,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Mountain Progress */}
           <button
             onClick={() => { playSound('click'); onOpenMountains(); }}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-white/80 hover:bg-white border border-[#E8E4D9] hover:border-[#7A9D54] text-xs text-[#3C4030] shadow-xs transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-2xl bg-white/80 hover:bg-white border border-[#E8E4D9] hover:border-[#7A9D54] text-xs text-[#3C4030] shadow-xs transition-all"
           >
-            <TreePine className="w-4 h-4 text-[#7A9D54]" />
+            <TreePine className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#7A9D54]" />
             <div className="text-left">
-              <div className="flex items-center gap-1 text-[11px] font-bold text-[#2D3319]">
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-[#2D3319]">
                 <span>{currentMountain.name}</span>
                 <span className="text-[#8C8F7A]">({user.treesInCurrentMountain}/{currentMountain.requiredTrees})</span>
               </div>
-              <div className="w-16 sm:w-20 h-1.5 bg-[#F0EDE5] rounded-full overflow-hidden mt-0.5">
+              <div className="w-12 sm:w-20 h-1.5 bg-[#F0EDE5] rounded-full overflow-hidden mt-0.5">
                 <div 
                   className="h-full bg-[#7A9D54] rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
@@ -106,32 +106,32 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </button>
 
-          {/* Leaderboard CTA */}
+          {/* Leaderboard CTA (hidden on smallest mobile since bottom nav has it) */}
           <button
             onClick={() => { playSound('click'); onOpenLeaderboard(); }}
             aria-label="랭킹보기"
-            className="p-2.5 rounded-full bg-white/80 hover:bg-white border border-[#E8E4D9] text-[#6B705C] hover:text-[#2D3319] shadow-xs transition-colors"
+            className="hidden sm:flex p-2.5 rounded-full bg-white/80 hover:bg-white border border-[#E8E4D9] text-[#6B705C] hover:text-[#2D3319] shadow-xs transition-colors"
           >
             <Trophy className="w-4 h-4 text-[#7A9D54]" />
           </button>
 
-          {/* Real-time Camera Scanner Trigger */}
+          {/* Real-time Camera Scanner Trigger (Desktop/Tablet) */}
           <button
             onClick={() => {
               playSound('click');
               onOpenScanner();
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#4A7856] hover:bg-[#3E6548] text-white font-bold text-xs sm:text-sm shadow-[0_6px_20px_rgba(74,120,86,0.25)] active:scale-95 transition-all"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[#4A7856] hover:bg-[#3E6548] text-white font-bold text-xs sm:text-sm shadow-[0_6px_20px_rgba(74,120,86,0.25)] active:scale-95 transition-all"
           >
             <Camera className="w-4 h-4" />
-            <span className="hidden sm:inline">실시간 촬영 인식</span>
-            <span className="sm:hidden">인식</span>
+            <span>실시간 촬영 인식</span>
           </button>
 
           {/* User Profile / Menu */}
           <button
             onClick={() => { playSound('click'); onOpenStats(); }}
-            className="w-9 h-9 rounded-full bg-white border border-[#E8E4D9] shadow-xs overflow-hidden hover:border-[#7A9D54] transition-all flex items-center justify-center text-xs font-bold text-[#3C4030]"
+            aria-label="에코 통계 프로필"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-[#E8E4D9] shadow-xs overflow-hidden hover:border-[#7A9D54] transition-all flex items-center justify-center text-xs font-bold text-[#3C4030]"
           >
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover" />
