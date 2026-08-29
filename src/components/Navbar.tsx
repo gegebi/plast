@@ -45,17 +45,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <img src="/favicon.svg" alt="Plast Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-xl tracking-tight text-[#2D3319] font-sans">
-                  Plast
-                </h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold uppercase tracking-wider">
-                  Eco-Forest
-                </span>
-              </div>
-              <p className="text-[11px] text-[#8C8F7A] font-medium hidden sm:block">
-                Eco-Restoration Project
-              </p>
+              <h1 className="font-extrabold text-xl tracking-tight text-[#2D3319] font-sans">
+                Plast
+              </h1>
             </div>
           </div>
 
@@ -77,16 +69,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Forest Status & Tree Counter */}
         <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Growth Multiplier (More trees = faster growth!) */}
-          <div 
-            title="나무가 많을수록 광합성 시너지로 성장 속도가 증가합니다!"
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-white/80 border border-[#E8E4D9] text-[#3C4030] text-[11px] sm:text-xs font-medium shadow-xs"
-          >
-            <Sparkles className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#7A9D54] animate-spin" style={{ animationDuration: '6s' }} />
-            <span className="font-bold text-[#2D3319]">x{growthMultiplier.toFixed(1)}</span>
-            <span className="hidden lg:inline text-[#8C8F7A]">성장 부스트</span>
-          </div>
-
           {/* Mountain Progress */}
           <button
             onClick={() => { playSound('click'); onOpenMountains(); }}
