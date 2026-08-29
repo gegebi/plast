@@ -10,13 +10,15 @@ interface ForestStatsModalProps {
   trees?: TreeItem[];
   onClose: () => void;
   onLogout: () => void;
+  onEditProfile?: () => void;
 }
 
 export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
   user,
   trees = [],
   onClose,
-  onLogout
+  onLogout,
+  onEditProfile,
 }) => {
   const currentMountain = MOUNTAIN_LEAGUES[user.currentLeagueId];
   const totalCarbonKg = (user.carbonSavedGrams / 1000).toFixed(2);
@@ -57,8 +59,25 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold border border-[#CCD5AE]">
                   {currentMountain.name} 리그
                 </span>
+                {user.isGuest ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-200">
+                    게스트 모드
+                  </span>
+                ) : onEditProfile ? (
+                  <button
+                    onClick={() => {
+                      playSound('click');
+                      onEditProfile();
+                    }}
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-white hover:bg-[#F0EDE5] text-[#4A7856] font-bold border border-[#A3B18A] transition-colors"
+                  >
+                    ✏️ 프로필 수정
+                  </button>
+                ) : null}
               </div>
-              <p className="text-xs text-[#8C8F7A]">{user.email}</p>
+              <p className="text-xs text-[#8C8F7A]">
+                {user.isGuest ? '1회용 체험 세션 (저장되지 않음)' : user.email}
+              </p>
             </div>
           </div>
 

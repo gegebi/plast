@@ -49,6 +49,7 @@ export const firestoreService = {
         recyclingStreakDays: user.recyclingStreakDays,
         lastActiveTimestamp: user.lastActiveTimestamp,
         hasCompletedTutorial: user.hasCompletedTutorial,
+        profileSetupCompleted: user.profileSetupCompleted ?? false,
       };
 
       await setDoc(doc(db, 'users', user.id), sanitizedUser, { merge: true });

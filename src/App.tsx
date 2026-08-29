@@ -10,6 +10,7 @@ import { LeaderboardModal } from './components/LeaderboardModal';
 import { ForestStatsModal } from './components/ForestStatsModal';
 import { LandingPage } from './components/LandingPage';
 import { TutorialModal } from './components/TutorialModal';
+import { ProfileSetupModal } from './components/ProfileSetupModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { playSound } from './utils/sound';
 import { useAuth } from './context/AuthContext';
@@ -21,11 +22,13 @@ const STORAGE_KEY_TREES = 'plast_eco_trees_v1';
 export default function App() {
   const { firebaseUser, loading: authLoading, signInWithGoogle, logout } = useAuth();
 
-  // Local/synced user profile state
+  // Local/synced user profile state - Never restore guest from storage
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_USER);
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      return parsed && !parsed.isGuest ? parsed : null;
     } catch {
       return null;
     }
@@ -33,6 +36,10 @@ export default function App() {
 
   const [trees, setTrees] = useState<TreeItem[]>(() => {
     try {
+      const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+      if (!savedUser) return [];
+      const parsedUser = JSON.parse(savedUser);
+      if (parsedUser?.isGuest) return [];
       const saved = localStorage.getItem(STORAGE_KEY_TREES);
       return saved ? JSON.parse(saved) : [];
     } catch {
@@ -54,14 +61,15 @@ export default function App() {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
   const [isStatsOpen, setIsStatsOpen] = useState<boolean>(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
+  const [isProfileSetupOpen, setIsProfileSetupOpen] = useState<boolean>(false);
 
   const isInitialAuthRef = useRef(false);
 
   // Sync with Firestore when Firebase user changes
   useEffect(() => {
     if (!firebaseUser) {
-      if (!user) {
-        setCurrentView('LANDING');
+      if (!user || user.isGuest) {
+        if (!user) setCurrentView('LANDING');
       }
       return;
     }
@@ -75,12 +83,15 @@ export default function App() {
 
       if (remoteUser) {
         setUser(remoteUser);
-        if (!isInitialAuthRef.current) {
+        if (!remoteUser.profileSetupCompleted) {
+          // Open profile / nickname setup screen for Google login
+          setIsProfileSetupOpen(true);
+        } else if (!isInitialAuthRef.current) {
           isInitialAuthRef.current = true;
           setCurrentView('HOME');
         }
       } else {
-        // First-time Google user initialization
+        // First-time Google user initialization -> Show Profile/Nickname setup modal
         const newUser: UserProfile = {
           id: userId,
           nickname: firebaseUser.displayName || '에코러너',
@@ -95,13 +106,13 @@ export default function App() {
           recyclingStreakDays: 1,
           lastActiveTimestamp: Date.now(),
           hasCompletedTutorial: false,
+          isGuest: false,
+          profileSetupCompleted: false,
           history: []
         };
 
         setUser(newUser);
-        firestoreService.saveUserProfile(newUser);
-        firestoreService.updateLeaderboard('namsan', newUser);
-        setIsTutorialOpen(true);
+        setIsProfileSetupOpen(true);
       }
     });
 
@@ -120,26 +131,29 @@ export default function App() {
     };
   }, [firebaseUser]);
 
-  // Local caching fallback
+  // Local caching: ONLY persist for logged-in non-guest users
   useEffect(() => {
-    if (user) {
+    if (user && !user.isGuest && firebaseUser) {
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
     } else {
       localStorage.removeItem(STORAGE_KEY_USER);
     }
-  }, [user]);
+  }, [user, firebaseUser]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_TREES, JSON.stringify(trees));
-  }, [trees]);
+    if (user && !user.isGuest && firebaseUser) {
+      localStorage.setItem(STORAGE_KEY_TREES, JSON.stringify(trees));
+    } else {
+      localStorage.removeItem(STORAGE_KEY_TREES);
+    }
+  }, [trees, user, firebaseUser]);
 
   // Active tree calculations
   const activeTrees = trees.filter(t => t.stage !== 'chopped');
   // Photosynthesis Synergy Multiplier (More trees = faster growth!)
-  // Base time: 5 hours. With more trees, multiplier scales up and reduces total time!
   const growthMultiplier = 1.0 + Math.min(5.0, (activeTrees.length * 0.15));
 
-  // Passive Natural Growth Loop (5 Hours base, accelerated by photosynthesis synergy)
+  // Passive Natural Growth Loop (accelerated by photosynthesis synergy)
   useEffect(() => {
     if (!user || trees.length === 0) return;
 
@@ -153,9 +167,6 @@ export default function App() {
           }
 
           hasChanges = true;
-          // In 5 hours (= 18000s), percent per second = 100 / 18000.
-          // In 3 seconds, base increment = (100 / 18000) * 3 = 0.01667%
-          // For lively visual progression in-app: 0.25% * growthMultiplier every 3s
           const increment = 0.25 * growthMultiplier;
           const newPercent = Math.min(100, tree.growthPercent + increment);
 
@@ -172,8 +183,8 @@ export default function App() {
             stage: newStage
           };
 
-          // If connected to Firebase, periodically update tree
-          if (user.id && firebaseUser) {
+          // If connected to Firebase and not a guest, update tree in Firestore
+          if (user.id && firebaseUser && !user.isGuest) {
             firestoreService.updateTree(user.id, tree.id, {
               growthPercent: newPercent,
               stage: newStage
@@ -190,28 +201,45 @@ export default function App() {
     return () => clearInterval(interval);
   }, [user, trees.length, growthMultiplier, firebaseUser]);
 
-  // Handle Login / Registration (Guest mode or Custom Nickname)
-  const handleLogin = (nickname: string, email: string) => {
-    const newUser: UserProfile = {
-      id: `user_${Date.now()}`,
-      nickname: nickname || '에코마스터',
-      email: email || 'eco@plast.kr',
-      avatarUrl: '',
+  // Guest Mode Login Handler (Always fresh start, no persistence)
+  const handleLogin = (nickname: string, avatarUrl?: string) => {
+    // Clear any previous storage to guarantee a fresh start
+    localStorage.removeItem(STORAGE_KEY_USER);
+    localStorage.removeItem(STORAGE_KEY_TREES);
+
+    const initialSeedling: TreeItem = {
+      id: `tree_${Date.now()}`,
+      type: 'pine',
+      name: '게스트 환영 묘목',
+      stage: 'seedling',
+      growthPercent: 20,
+      plantedAt: Date.now(),
+      gridIndex: 0,
+      itemNameAtPlanting: '게스트 체험 시작 묘목'
+    };
+
+    const guestUser: UserProfile = {
+      id: `guest_${Date.now()}`,
+      nickname: nickname || '게스트러너',
+      email: 'guest@plast.kr',
+      avatarUrl: avatarUrl || '🌱',
       currentLeagueId: 'namsan',
       leagueRank: 1,
-      treesInCurrentMountain: 0,
-      totalTreesGrownAllTime: 0,
+      treesInCurrentMountain: 1,
+      totalTreesGrownAllTime: 1,
       totalTreesChopped: 0,
       carbonSavedGrams: 0,
       recyclingStreakDays: 1,
       lastActiveTimestamp: Date.now(),
-      hasCompletedTutorial: false,
+      hasCompletedTutorial: true,
+      isGuest: true,
+      profileSetupCompleted: true,
       history: []
     };
 
-    setUser(newUser);
-    setTrees([]);
-    setIsTutorialOpen(true);
+    setUser(guestUser);
+    setTrees([initialSeedling]);
+    setCurrentView('HOME');
   };
 
   // Google Login Handler
@@ -220,6 +248,33 @@ export default function App() {
       await signInWithGoogle();
     } catch (err) {
       console.error('Google login error:', err);
+    }
+  };
+
+  // Save Google User Profile (Nickname & Avatar)
+  const handleSaveGoogleProfile = (nickname: string, avatarUrl: string) => {
+    if (!user) return;
+
+    const updatedUser: UserProfile = {
+      ...user,
+      nickname,
+      avatarUrl,
+      isGuest: false,
+      profileSetupCompleted: true,
+    };
+
+    setUser(updatedUser);
+    setIsProfileSetupOpen(false);
+
+    if (firebaseUser) {
+      firestoreService.saveUserProfile(updatedUser);
+      firestoreService.updateLeaderboard(updatedUser.currentLeagueId, updatedUser);
+    }
+
+    if (!updatedUser.hasCompletedTutorial) {
+      setIsTutorialOpen(true);
+    } else {
+      setCurrentView('HOME');
     }
   };
 
@@ -249,8 +304,8 @@ export default function App() {
 
     setUser(updatedUser);
 
-    // Save to Firestore
-    if (firebaseUser) {
+    // Save to Firestore if not guest
+    if (firebaseUser && !user.isGuest) {
       firestoreService.saveUserProfile(updatedUser);
       firestoreService.saveTree(user.id, initialSeedling);
       firestoreService.updateLeaderboard(user.currentLeagueId, updatedUser);
@@ -326,8 +381,8 @@ export default function App() {
 
         setUser(updatedUser);
 
-        // Firestore sync
-        if (firebaseUser) {
+        // Firestore sync if not a guest
+        if (firebaseUser && !user.isGuest) {
           firestoreService.saveTree(user.id, newTree);
           firestoreService.addRecord(user.id, newRecord);
           firestoreService.saveUserProfile(updatedUser);
@@ -363,8 +418,8 @@ export default function App() {
 
         setUser(updatedUser);
 
-        // Firestore sync
-        if (firebaseUser) {
+        // Firestore sync if not guest
+        if (firebaseUser && !user.isGuest) {
           if (choppedTreeId) {
             firestoreService.updateTree(user.id, choppedTreeId, {
               stage: 'chopped',
@@ -379,7 +434,7 @@ export default function App() {
     }
   };
 
-  // Mountain League Upgrade (e.g. 50 trees -> Namsan complete, reset to 0 to grow Hallasan!)
+  // Mountain League Upgrade
   const handleUpgradeMountain = () => {
     if (!user) return;
     const next = getNextLeague(user.currentLeagueId);
@@ -388,13 +443,13 @@ export default function App() {
     const updatedUser: UserProfile = {
       ...user,
       currentLeagueId: next.id,
-      treesInCurrentMountain: 0, // Reset to 0 for the next league as requested!
+      treesInCurrentMountain: 0,
       leagueRank: 1
     };
 
     setUser(updatedUser);
 
-    if (firebaseUser) {
+    if (firebaseUser && !user.isGuest) {
       firestoreService.saveUserProfile(updatedUser);
       firestoreService.updateLeaderboard(next.id, updatedUser);
     }
@@ -402,10 +457,10 @@ export default function App() {
     setIsMountainsOpen(false);
   };
 
-  // Delete individual tree (e.g. clean up chopped stump from forest meadow)
+  // Delete individual tree
   const handleDeleteTree = (treeId: string) => {
     setTrees(prev => prev.filter(t => t.id !== treeId));
-    if (user && firebaseUser) {
+    if (user && firebaseUser && !user.isGuest) {
       firestoreService.deleteTree(user.id, treeId);
     }
   };
@@ -414,7 +469,7 @@ export default function App() {
   const handleClearChoppedTrees = () => {
     const choppedIds = trees.filter(t => t.stage === 'chopped').map(t => t.id);
     setTrees(prev => prev.filter(t => t.stage !== 'chopped'));
-    if (user && firebaseUser && choppedIds.length > 0) {
+    if (user && firebaseUser && !user.isGuest && choppedIds.length > 0) {
       firestoreService.deleteMultipleTrees(user.id, choppedIds);
     }
   };
@@ -427,6 +482,7 @@ export default function App() {
     setIsStatsOpen(false);
     setIsLeaderboardOpen(false);
     setIsMountainsOpen(false);
+    setIsProfileSetupOpen(false);
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TREES);
   };
@@ -441,6 +497,16 @@ export default function App() {
           onGoogleLogin={handleGoogleLogin}
           onGoToHome={() => setCurrentView('HOME')}
         />
+
+        {/* Google Nickname & Profile Setup Modal */}
+        {isProfileSetupOpen && user && (
+          <ProfileSetupModal
+            initialNickname={user.nickname || firebaseUser?.displayName || '에코러너'}
+            initialAvatarUrl={user.avatarUrl || firebaseUser?.photoURL || ''}
+            userEmail={user.email || firebaseUser?.email || ''}
+            onSaveProfile={handleSaveGoogleProfile}
+          />
+        )}
 
         {/* Onboarding Tutorial Modal */}
         {isTutorialOpen && user && (
@@ -564,6 +630,17 @@ export default function App() {
           trees={trees}
           onClose={() => setIsStatsOpen(false)}
           onLogout={handleLogout}
+          onEditProfile={!user.isGuest ? () => setIsProfileSetupOpen(true) : undefined}
+        />
+      )}
+
+      {/* Profile Setup Modal (Accessible for Google users) */}
+      {isProfileSetupOpen && user && (
+        <ProfileSetupModal
+          initialNickname={user.nickname || firebaseUser?.displayName || '에코러너'}
+          initialAvatarUrl={user.avatarUrl || firebaseUser?.photoURL || ''}
+          userEmail={user.email || firebaseUser?.email || ''}
+          onSaveProfile={handleSaveGoogleProfile}
         />
       )}
 

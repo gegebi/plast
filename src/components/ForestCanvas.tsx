@@ -226,42 +226,91 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
   };
 
   return (
-    <div className="relative w-full rounded-3xl bg-white/95 border border-[#E8E4D9] p-4 sm:p-6 lg:p-8 shadow-xl overflow-hidden backdrop-blur-md text-[#3C4030]">
-      {/* Top Forest Header & Synergy Multiplier Card */}
-      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-5 border-b border-[#E8E4D9]">
+    <div className="relative w-full rounded-3xl md:rounded-[32px] overflow-hidden border-2 sm:border-4 border-[#8EB05B]/40 shadow-2xl bg-gradient-to-b from-[#7CA452] via-[#66903D] to-[#4F772D] p-3.5 sm:p-6 lg:p-8 flex flex-col justify-between select-none min-h-[calc(100vh-170px)] sm:min-h-[700px]">
+      {/* ========================================================================= */}
+      {/* MEADOW ATMOSPHERE & BACKGROUND HILLS                                      */}
+      {/* ========================================================================= */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Subtle Organic Rolling Grass Hills SVG */}
+        <svg className="absolute bottom-0 left-0 w-full h-56 sm:h-72 opacity-30" viewBox="0 0 1200 300" preserveAspectRatio="none">
+          <path d="M0,160 C300,260 600,60 900,180 C1050,240 1150,150 1200,160 L1200,300 L0,300 Z" fill="#2D4D17" />
+          <path d="M0,200 C200,120 500,240 800,140 C1000,80 1100,180 1200,200 L1200,300 L0,300 Z" fill="#1F3610" />
+        </svg>
+
+        {/* Warm Sunlight Glow */}
+        <div className="absolute -top-12 -right-12 w-80 h-80 rounded-full bg-gradient-to-br from-[#FFEAA7]/45 via-[#FDCB6E]/20 to-transparent blur-3xl" />
+
+        {/* Ambient Pollen / Fluff Floating Particles */}
+        <motion.div
+          animate={{ x: [0, 80, 0], y: [0, -20, 0], opacity: [0.5, 0.9, 0.5] }}
+          transition={{ repeat: Infinity, duration: 9, ease: "easeInOut" }}
+          className="absolute top-16 left-12 text-white/55 text-xs select-none"
+        >
+          🌾 • °
+        </motion.div>
+        <motion.div
+          animate={{ x: [0, -70, 0], y: [0, 25, 0], opacity: [0.4, 0.8, 0.4] }}
+          transition={{ repeat: Infinity, duration: 12, ease: "easeInOut" }}
+          className="absolute top-44 right-20 text-white/45 text-xs select-none"
+        >
+          ✨ 🍃
+        </motion.div>
+        <motion.div
+          animate={{ x: [0, 100, 0], y: [0, -30, 0], opacity: [0.4, 0.85, 0.4] }}
+          transition={{ repeat: Infinity, duration: 15, ease: "easeInOut" }}
+          className="absolute bottom-20 left-1/3 text-white/50 text-xs select-none"
+        >
+          • ° 🌸
+        </motion.div>
+
+        {/* Meadow Wild Flowers scattered across the field */}
+        <span className="absolute top-10 left-1/4 text-sm opacity-75 select-none">🌼</span>
+        <span className="absolute top-24 right-1/3 text-xs opacity-60 select-none">🌸</span>
+        <span className="absolute top-36 left-10 text-xs opacity-70 select-none">🍀</span>
+        <span className="absolute bottom-12 right-20 text-sm opacity-80 select-none">🌼</span>
+        <span className="absolute bottom-16 left-24 text-xs opacity-75 select-none">🌸</span>
+        <span className="absolute bottom-32 right-1/4 text-xs opacity-65 select-none">🍀</span>
+        <span className="absolute top-1/2 left-8 text-xs opacity-60 select-none">🌼</span>
+        <span className="absolute top-1/2 right-12 text-xs opacity-70 select-none">🌸</span>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TOP FLOATING GLASS HEADER & STATUS                                       */}
+      {/* ========================================================================= */}
+      <div className="relative z-20 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-3.5 sm:p-4.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white shadow-lg mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl sm:text-3xl font-sans font-extrabold text-[#2D3319] tracking-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-sans font-extrabold text-white tracking-tight drop-shadow-sm">
               {user.nickname}의 에코 포레스트 풀밭
             </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E9EDC9] text-[#4A5D23] font-bold border border-[#DDE5B6]">
-              생태 풀밭 잔디원 🌿
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E9EDC9] text-[#2D6A4F] font-extrabold border border-[#DDE5B6] shadow-xs">
+              생태 풀밭 🌿
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#6B705C] mt-1 font-medium flex items-center gap-2">
-            <span>깨끗이 분리수거된 묘목들이 따스한 풀밭 위에서 자연 성장하고 있습니다.</span>
+          <p className="text-xs sm:text-sm text-white/90 mt-0.5 font-medium flex items-center gap-1.5">
+            <span>깨끗하게 분리수거된 묘목들이 따스한 풀밭 위에서 자연 성장하고 있습니다.</span>
           </p>
         </div>
 
-        {/* Dynamic Growth Speed & Synergy Indicator */}
-        <div className="flex flex-wrap items-center gap-2 bg-[#F4F6EC] border border-[#DDE5B6] px-3.5 py-2 rounded-2xl shadow-xs">
-          <div className="flex items-center gap-1.5 text-[#4A5D23] text-xs font-bold">
-            <Sun className="w-4 h-4 text-[#E2B842] animate-spin" style={{ animationDuration: '15s' }} />
+        {/* Growth Speed & Multiplier Stats Bar */}
+        <div className="flex flex-wrap items-center gap-2 bg-white/15 border border-white/25 px-3 py-1.5 rounded-2xl shadow-inner text-white text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-[#FEF08A]">
+            <Sun className="w-4 h-4 text-[#FACC15] animate-spin" style={{ animationDuration: '15s' }} />
             <span>광합성 시너지 x{growthMultiplier.toFixed(1)}배</span>
           </div>
-          <span className="text-[#A3B18A] text-xs">|</span>
-          <div className="flex items-center gap-1 text-xs font-bold text-[#4A7856]">
-            <Clock className="w-3.5 h-3.5" />
+          <span className="text-white/40">|</span>
+          <div className="flex items-center gap-1 font-semibold text-white/90">
+            <Clock className="w-3.5 h-3.5 text-[#86EFAC]" />
             <span>성장 기준 5시간</span>
           </div>
-          <span className="text-[#A3B18A] text-xs">|</span>
-          <span className="text-xs font-bold text-[#2D3319]">
+          <span className="text-white/40">|</span>
+          <span className="font-extrabold text-[#FDE047]">
             총 {activeTreesCount}그루
           </span>
           {choppedTreesCount > 0 && (
             <div className="flex items-center gap-1.5 ml-1">
-              <span className="text-xs text-rose-600 font-bold">
-                (벌목 {choppedTreesCount}그루 🪓)
+              <span className="text-xs text-rose-300 font-extrabold bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-400/30">
+                벌목 {choppedTreesCount}그루 🪓
               </span>
               {onClearChoppedTrees && (
                 <button
@@ -271,7 +320,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
                       onClearChoppedTrees();
                     }
                   }}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold transition-all shadow-xs"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/80 hover:bg-rose-600 border border-rose-300 text-white text-[11px] font-bold transition-all shadow-xs active:scale-95"
                 >
                   <Trash2 className="w-3 h-3" />
                   <span>일괄 정리</span>
@@ -282,72 +331,25 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* VIBRANT GRASSLAND MEADOW FIELD (풀밭 지형)                               */}
-      {/* ========================================================================= */}
-      <div className="relative z-10 my-5 min-h-[420px] sm:min-h-[480px] rounded-3xl overflow-hidden border-4 border-[#8EB05B]/30 shadow-inner bg-gradient-to-b from-[#7CA452] via-[#66903D] to-[#4F772D] p-5 sm:p-7 flex flex-col justify-between select-none">
-        
-        {/* Layer 1: Meadow Atmosphere & Rolling Hill Contours */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Subtle Organic Rolling Grass Hills SVG */}
-          <svg className="absolute bottom-0 left-0 w-full h-48 opacity-35" viewBox="0 0 1200 300" preserveAspectRatio="none">
-            <path d="M0,160 C300,260 600,60 900,180 C1050,240 1150,150 1200,160 L1200,300 L0,300 Z" fill="#3D5F22" />
-            <path d="M0,200 C200,120 500,240 800,140 C1000,80 1100,180 1200,200 L1200,300 L0,300 Z" fill="#2E4A19" />
-          </svg>
-
-          {/* Sunlight Rays Glint */}
-          <div className="absolute -top-10 -right-10 w-72 h-72 rounded-full bg-gradient-to-br from-[#FFEAA7]/40 via-[#FDCB6E]/15 to-transparent blur-2xl" />
-
-          {/* Dandelion Fluffs / Pollen Drift in Gentle Breeze */}
-          <motion.div
-            animate={{ x: [0, 80, 0], y: [0, -15, 0], opacity: [0.6, 0.9, 0.6] }}
-            transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-            className="absolute top-12 left-10 text-white/50 text-xs"
-          >
-            🌾 • °
-          </motion.div>
-          <motion.div
-            animate={{ x: [0, -60, 0], y: [0, 20, 0], opacity: [0.4, 0.8, 0.4] }}
-            transition={{ repeat: Infinity, duration: 11, ease: "easeInOut" }}
-            className="absolute top-36 right-20 text-white/40 text-xs"
-          >
-            ✨ 🍃
-          </motion.div>
-          <motion.div
-            animate={{ x: [0, 100, 0], y: [0, -25, 0], opacity: [0.5, 0.85, 0.5] }}
-            transition={{ repeat: Infinity, duration: 14, ease: "easeInOut" }}
-            className="absolute bottom-16 left-1/3 text-white/45 text-xs"
-          >
-            • ° 🌸
-          </motion.div>
-
-          {/* Meadow Wild Flowers & Grass Tufts scattered along the grass canvas */}
-          <span className="absolute top-6 left-1/4 text-sm opacity-75">🌼</span>
-          <span className="absolute top-16 right-1/3 text-xs opacity-60">🌸</span>
-          <span className="absolute top-28 left-12 text-xs opacity-70">🍀</span>
-          <span className="absolute bottom-8 right-16 text-sm opacity-80">🌼</span>
-          <span className="absolute bottom-12 left-20 text-xs opacity-75">🌸</span>
-          <span className="absolute bottom-24 right-1/4 text-xs opacity-65">🍀</span>
-          <span className="absolute top-1/2 left-8 text-xs opacity-60">🌼</span>
-          <span className="absolute top-1/2 right-10 text-xs opacity-70">🌸</span>
+      {/* Layer 2: Weather & Eco Index Bar */}
+      <div className="relative z-20 flex items-center justify-between text-xs text-white/90 font-bold mb-3 px-1">
+        <div className="flex items-center gap-2 bg-black/25 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15">
+          <Wind className="w-3.5 h-3.5 text-[#A3E635]" />
+          <span>푸른 풀밭 생태 지수 99.8% (신선한 피톤치드 맑음)</span>
         </div>
-
-        {/* Layer 2: Grassland Weather Bar */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-white/90 font-bold mb-3 px-1">
-          <div className="flex items-center gap-2 bg-black/20 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15">
-            <Wind className="w-3.5 h-3.5 text-[#A3E635]" />
-            <span>푸른 풀밭 생태 지수 99.8% (신선한 피톤치드 맑음)</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 bg-black/20 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 text-[11px]">
-            <Sparkles className="w-3.5 h-3.5 text-[#FDE047]" />
-            <span>나무를 탭하면 피어나는 에코 파티클!</span>
-          </div>
+        <div className="hidden sm:flex items-center gap-2 bg-black/25 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 text-[11px]">
+          <Sparkles className="w-3.5 h-3.5 text-[#FDE047]" />
+          <span>나무를 탭하면 피어나는 에코 파티클!</span>
         </div>
+      </div>
 
-        {/* Layer 3: Main Grassland Content Area */}
+      {/* ========================================================================= */}
+      {/* MAIN MEADOW CONTENT (PLANTED TREES & SLOTS)                               */}
+      {/* ========================================================================= */}
+      <div className="relative z-10 flex-1 flex flex-col justify-center">
         {trees.length === 0 ? (
-          /* Empty Grassland State */
-          <div className="relative z-10 my-auto text-center py-12 px-4 max-w-md mx-auto bg-black/25 backdrop-blur-md rounded-3xl border border-white/20 text-white shadow-xl">
+          /* Empty Meadow State */
+          <div className="my-auto text-center py-12 px-4 max-w-md mx-auto bg-black/25 backdrop-blur-md rounded-3xl border border-white/20 text-white shadow-2xl">
             <div className="w-20 h-20 mx-auto rounded-3xl bg-[#7CA452] border-2 border-white/40 shadow-md flex items-center justify-center text-4xl mb-4 animate-bounce">
               🌱
             </div>
@@ -366,11 +368,10 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
           </div>
         ) : (
           /* Grid of Trees Planted directly on the Grassland */
-          <div className="relative z-10 w-full py-2">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4.5 justify-items-center">
+          <div className="w-full py-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-8 justify-items-center items-end">
               {trees.map((tree) => {
                 const isBouncing = bouncingTreeId === tree.id;
-                const isGrowing = tree.stage !== 'chopped' && tree.growthPercent < 100;
                 const remainingTimeStr = getRemainingTimeText(tree.growthPercent);
 
                 return (
@@ -379,122 +380,155 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
                     layout
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    whileHover={{ scale: 1.06, y: -4 }}
+                    whileHover={{ y: -6 }}
                     onClick={(e) => handleTreeInteract(e, tree)}
-                    className="relative group flex flex-col items-center justify-end w-full cursor-pointer transition-all"
+                    className="relative group flex flex-col items-center justify-end w-full cursor-pointer select-none"
                   >
-                    {/* Natural Earth/Soil Mound & Grass Ring Base on the Grassland */}
-                    <div className={`w-full rounded-2xl p-2.5 sm:p-3 flex flex-col items-center border backdrop-blur-md transition-all ${
-                      tree.stage === 'chopped'
-                        ? 'bg-[#451A03]/60 border-rose-400/50 shadow-md'
-                        : 'bg-[#2E4A19]/55 hover:bg-[#2E4A19]/75 border-[#A3E635]/30 hover:border-[#FACC15] shadow-lg shadow-black/20'
-                    }`}>
+                    {/* Organic Glow on Hover */}
+                    <div className="absolute inset-0 -top-4 rounded-full bg-white/0 group-hover:bg-white/10 transition-colors pointer-events-none blur-md" />
 
-                      {/* Tree Graphic with interactive spring squash & stretch on click */}
-                      <motion.div
-                        animate={isBouncing ? {
-                          scale: [1, 1.35, 0.85, 1.15, 1],
-                          rotate: [0, -8, 8, -4, 0],
-                          y: [0, -12, 4, -4, 0]
-                        } : {
-                          y: [0, -2, 0]
-                        }}
-                        transition={isBouncing ? { duration: 0.5, ease: "easeOut" } : { duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                        className="relative z-10 my-1 flex items-center justify-center filter drop-shadow-md"
-                      >
-                        {renderTreeGraphic(tree)}
-                      </motion.div>
+                    {/* Tree Graphic with interactive spring squash & stretch on click */}
+                    <motion.div
+                      animate={isBouncing ? {
+                        scale: [1, 1.35, 0.85, 1.15, 1],
+                        rotate: [0, -8, 8, -4, 0],
+                        y: [0, -14, 4, -4, 0]
+                      } : {
+                        y: [0, -3, 0]
+                      }}
+                      transition={isBouncing ? { duration: 0.5, ease: "easeOut" } : { duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+                      className="relative z-10 flex items-center justify-center filter drop-shadow-xl"
+                    >
+                      {renderTreeGraphic(tree)}
+                    </motion.div>
 
-                      {/* Grass/Soil Base Highlight */}
-                      <div className="w-16 h-2 rounded-full bg-[#1F3311]/70 -mt-2 mb-1.5 blur-[1px]" />
+                    {/* Direct Soil Mound & Grass Ring (땅/흙 언덕 베이스) */}
+                    <div className="relative z-0 -mt-3.5 flex flex-col items-center w-full">
+                      {/* Organic Earth Mound */}
+                      <div className={`w-24 sm:w-28 h-5 sm:h-6 rounded-full flex items-center justify-center shadow-inner relative transition-transform ${
+                        tree.stage === 'chopped'
+                          ? 'bg-gradient-to-r from-[#2B170B] via-[#451A03] to-[#2B170B] border border-rose-900/60 shadow-black/40'
+                          : 'bg-gradient-to-r from-[#283C15] via-[#1E2E10] to-[#283C15] border border-[#3E5C1E]/50 shadow-black/30'
+                      }`}>
+                        {/* Little Grass Tufts & Soil Pebbles */}
+                        <span className="absolute -top-1 left-2 text-[10px] opacity-75">🌱</span>
+                        <span className="absolute -top-1 right-2 text-[10px] opacity-75">🍀</span>
+                        <div className="w-1.5 h-1 rounded-full bg-[#5C4028] opacity-60 absolute top-1 left-1/3" />
+                        <div className="w-2 h-1 rounded-full bg-[#3E2B1D] opacity-70 absolute bottom-1 right-1/3" />
+                      </div>
+                      
+                      {/* Soil Shadow on the grass */}
+                      <div className="w-28 sm:w-32 h-2.5 rounded-full bg-black/25 blur-[2px] -mt-2" />
+                    </div>
 
-                      {/* Wooden Tree Name Badge */}
-                      <div className="w-full text-center px-1">
-                        <p className="text-[12px] font-extrabold text-white truncate drop-shadow-sm font-sans">
+                    {/* Floating Wooden/Eco Name & Status Pill Tag */}
+                    <div className="relative z-20 mt-1.5 flex flex-col items-center max-w-[130px] w-full px-1">
+                      {/* Tree Name */}
+                      <div className="px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-center shadow-md max-w-full">
+                        <p className="text-[11px] sm:text-[12px] font-extrabold text-white truncate drop-shadow-xs font-sans">
                           {tree.name}
                         </p>
-
-                        {tree.stage !== 'chopped' ? (
-                          <div className="mt-1 w-full flex flex-col items-center">
-                            {/* Growth Progress Bar */}
-                            <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden p-0.5 border border-white/20">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${
-                                  tree.growthPercent >= 100 
-                                    ? 'bg-gradient-to-r from-[#FDE047] to-[#84CC16]' 
-                                    : 'bg-gradient-to-r from-[#4ADE80] to-[#22C55E]'
-                                }`}
-                                style={{ width: `${Math.max(8, Math.round(tree.growthPercent))}%` }}
-                              />
-                            </div>
-
-                            {/* Remaining Time or Mature Status */}
-                            <div className="mt-1 flex items-center justify-center gap-1 text-[10px] text-white/90 font-bold">
-                              {tree.growthPercent >= 100 ? (
-                                <span className="text-[#FDE047] flex items-center gap-0.5">
-                                  <span>🌳 완전 성장 ({Math.round(tree.growthPercent)}%)</span>
-                                </span>
-                              ) : (
-                                <span className="text-[#E2E8F0] flex items-center gap-1 bg-black/25 px-1.5 py-0.5 rounded-md border border-white/10">
-                                  <Clock className="w-2.5 h-2.5 text-[#FDE047]" />
-                                  <span>{remainingTimeStr}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mt-1 flex flex-col items-center gap-1">
-                            <span className="text-[10px] text-rose-300 font-extrabold block bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-500/30">
-                              오염 벌목 🪓
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                playSound('click');
-                                onDeleteTree(tree.id);
-                              }}
-                              className="flex items-center justify-center gap-1 text-[10px] font-bold text-rose-100 bg-rose-700/80 hover:bg-rose-600 px-2.5 py-0.5 rounded-full border border-rose-400/50 shadow-xs transition-all active:scale-95"
-                              title="벌목된 묘목 삭제"
-                            >
-                              <Trash2 className="w-2.5 h-2.5" />
-                              <span>삭제</span>
-                            </button>
-                          </div>
-                        )}
                       </div>
+
+                      {tree.stage !== 'chopped' ? (
+                        <div className="mt-1 w-full flex flex-col items-center">
+                          {/* Slim Growth Progress Bar */}
+                          <div className="w-full max-w-[100px] h-1.5 bg-black/50 rounded-full overflow-hidden p-[1px] border border-white/25 shadow-xs">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                tree.growthPercent >= 100 
+                                  ? 'bg-gradient-to-r from-[#FDE047] to-[#84CC16]' 
+                                  : 'bg-gradient-to-r from-[#4ADE80] to-[#22C55E]'
+                              }`}
+                              style={{ width: `${Math.max(8, Math.round(tree.growthPercent))}%` }}
+                            />
+                          </div>
+
+                          {/* Remaining Time or Mature Status */}
+                          <div className="mt-0.5 flex items-center justify-center text-[10px] text-white/95 font-bold">
+                            {tree.growthPercent >= 100 ? (
+                              <span className="text-[#FEF08A] flex items-center gap-0.5 drop-shadow-xs">
+                                <span>🌳 완전 성장 ({Math.round(tree.growthPercent)}%)</span>
+                              </span>
+                            ) : (
+                              <span className="text-white/90 flex items-center gap-1 bg-black/30 px-1.5 py-0.5 rounded-md border border-white/15 text-[9.5px]">
+                                <Clock className="w-2.5 h-2.5 text-[#FDE047]" />
+                                <span>{remainingTimeStr}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-1 flex flex-col items-center gap-1">
+                          <span className="text-[9.5px] text-rose-300 font-extrabold block bg-rose-950/70 px-2 py-0.5 rounded-full border border-rose-500/40">
+                            오염 벌목 🪓
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playSound('click');
+                              onDeleteTree(tree.id);
+                            }}
+                            className="flex items-center justify-center gap-1 text-[9.5px] font-bold text-rose-100 bg-rose-700/90 hover:bg-rose-600 px-2 py-0.5 rounded-full border border-rose-400/50 shadow-xs transition-all active:scale-95"
+                            title="벌목된 묘목 삭제"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                            <span>삭제</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 );
               })}
 
-              {/* Next Planting Slot on the Grassland */}
+              {/* Next Planting Soil Plot on the Grassland (흙 구덩이 심기 자리) */}
               <motion.div
                 whileHover={{ scale: 1.05, y: -4 }}
                 onClick={() => { playSound('click'); onOpenScanner(); }}
-                className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-[#FDE047]/60 hover:border-[#FDE047] bg-[#2E4A19]/40 hover:bg-[#2E4A19]/70 cursor-pointer text-center min-h-[140px] w-full transition-all shadow-md group backdrop-blur-xs"
+                className="flex flex-col items-center justify-end cursor-pointer group select-none w-full max-w-[130px]"
               >
-                <div className="w-11 h-11 rounded-full bg-[#FACC15] group-hover:scale-110 text-[#365314] flex items-center justify-center mb-2 shadow-lg transition-transform">
-                  <PlusCircle className="w-6 h-6" />
+                {/* Digging Hole / Planting Soil Ring */}
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-full border-2 border-dashed border-[#FDE047]/70 group-hover:border-[#FDE047] bg-gradient-to-b from-[#243812]/50 via-[#1C2C0D]/70 to-[#121E07]/90 flex flex-col items-center justify-center transition-all shadow-inner group-hover:shadow-[0_0_20px_rgba(250,204,21,0.35)] relative">
+                  {/* Soil center depth */}
+                  <div className="w-12 h-6 rounded-full bg-[#121A0A]/90 blur-[1px] absolute top-1/2 -translate-y-1/2" />
+                  
+                  {/* Glowing Plus Icon */}
+                  <div className="relative z-10 w-9 h-9 rounded-full bg-[#FACC15] group-hover:scale-110 text-[#365314] flex items-center justify-center shadow-lg transition-transform">
+                    <PlusCircle className="w-5 h-5" />
+                  </div>
+
+                  {/* Seedling Hint */}
+                  <span className="absolute -top-1.5 right-1 text-xs animate-bounce">🌱</span>
                 </div>
-                <span className="text-xs font-extrabold text-white">풀밭에 새 묘목 심기</span>
-                <span className="text-[10px] text-white/80 mt-0.5 font-medium">실시간 분리수거 인증</span>
+
+                {/* Soil Shadow on Grass */}
+                <div className="w-24 h-2 rounded-full bg-black/25 blur-[2px] mt-1 mb-1.5" />
+
+                {/* Text Label Badge */}
+                <div className="px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-center shadow-md">
+                  <span className="text-[11px] font-extrabold text-[#FEF08A] group-hover:text-white transition-colors block whitespace-nowrap">
+                    + 새 묘목 심기
+                  </span>
+                </div>
+                <span className="text-[9.5px] text-white/80 mt-0.5 font-medium">분리수거 인증</span>
               </motion.div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Grassland Bottom Info Strip */}
-        <div className="relative z-10 mt-3 pt-3 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between text-xs text-white/85 gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm">🌱</span>
-            <span>
-              <strong>5시간 자연 성장 법칙</strong>: 묘목은 5시간에 걸쳐 자라나며, 풀밭의 나무가 많을수록 광합성 시너지로 시간이 대폭 단축됩니다!
-            </span>
-          </div>
-          <span className="text-[11px] text-[#FDE047] font-bold">
-            성장 중인 묘목: {growingTreesCount}그루 / 완전 성장: {matureTreesCount}그루
+      {/* Meadow Bottom Info Strip */}
+      <div className="relative z-20 mt-4 pt-3 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between text-xs text-white/90 gap-2 bg-black/15 backdrop-blur-xs px-3.5 py-2 rounded-xl">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm">🌱</span>
+          <span>
+            <strong>5시간 자연 성장 법칙</strong>: 묘목은 5시간에 걸쳐 자라나며, 풀밭의 나무가 많을수록 광합성 시너지로 시간이 대폭 단축됩니다!
           </span>
         </div>
+        <span className="text-[11px] text-[#FDE047] font-bold">
+          성장 중인 묘목: {growingTreesCount}그루 / 완전 성장: {matureTreesCount}그루
+        </span>
       </div>
 
       {/* ========================================================================= */}

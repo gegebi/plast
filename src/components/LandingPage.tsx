@@ -6,7 +6,7 @@ import { playSound } from '../utils/sound';
 
 interface LandingPageProps {
   isLoggedIn: boolean;
-  onLogin: (nickname: string, email: string) => void;
+  onLogin: (nickname: string, avatarUrl?: string) => void;
   onGoogleLogin?: () => Promise<void>;
   onGoToHome: () => void;
 }
@@ -18,7 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onGoToHome
 }) => {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
-  const [nicknameInput, setNicknameInput] = useState<string>('에코러너');
+  const [nicknameInput, setNicknameInput] = useState<string>('게스트러너');
   const [selectedAvatar, setSelectedAvatar] = useState<string>('🌱');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
@@ -38,14 +38,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       }
     } else {
       playSound('fanfare');
-      onLogin(nicknameInput.trim() || '에코러너', `${nicknameInput.trim()}@gmail.com`);
+      onLogin(nicknameInput.trim() || '에코러너', selectedAvatar);
     }
   };
 
   const handleCustomStart = (e: React.FormEvent) => {
     e.preventDefault();
     playSound('fanfare');
-    onLogin(nicknameInput.trim() || '에코러너', `${nicknameInput.trim()}@plast.eco`);
+    onLogin(nicknameInput.trim() || '게스트러너', selectedAvatar);
     setShowLoginModal(false);
   };
 
@@ -153,13 +153,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       className="w-5 h-5 bg-white rounded-full p-0.5"
                     />
                   )}
-                  <span>Google 계정으로 시작하기</span>
+                  <span>Google 로그인</span>
                 </button>
                 <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/90 hover:bg-white border border-[#E8E4D9] text-[#2D3319] font-bold text-sm shadow-xs transition-all"
+                  onClick={() => {
+                    playSound('click');
+                    setShowLoginModal(true);
+                  }}
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/90 hover:bg-white border border-[#E8E4D9] text-[#2D3319] font-bold text-sm shadow-xs transition-all flex items-center justify-center gap-1.5"
                 >
-                  닉네임 설정하여 시작
+                  <span>게스트로 입장</span>
                 </button>
               </>
             )}
@@ -259,15 +262,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             className="w-full max-w-sm bg-[#F9F7F2] rounded-3xl border border-[#E8E4D9] p-6 sm:p-8 text-[#3C4030] shadow-2xl"
           >
             <div className="text-center mb-5">
-              <div className="w-14 h-14 mx-auto rounded-full bg-[#7A9D54] text-white flex items-center justify-center text-2xl mb-3 shadow-md border-2 border-white">
-                <span className="font-black font-sans">P</span>
+              <div className="w-14 h-14 mx-auto rounded-2xl overflow-hidden bg-[#7A9D54] flex items-center justify-center mb-3 shadow-md border-2 border-white">
+                <img src="/favicon.svg" alt="Plast Logo" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-extrabold text-[#2D3319] mb-1 font-sans">
-                Plast 계정 시작하기
+                게스트로 입장하기
               </h3>
               <p className="text-xs text-[#8C8F7A]">
-                구글 계정으로 간편하게 시작하고 나만의 숲을 만드세요.
+                저장되지 않는 1회용 체험 세션으로 즉시 풀밭을 가꿔봅니다.
               </p>
+              <div className="mt-2.5 px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium">
+                💡 게스트 데이터는 저장되지 않으며 새로고침 시 항상 처음부터 시작됩니다.
+              </div>
             </div>
 
             <form onSubmit={handleCustomStart} className="space-y-4">

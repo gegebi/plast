@@ -67,6 +67,8 @@ export interface UserProfile {
   recyclingStreakDays: number;
   lastActiveTimestamp: number;
   hasCompletedTutorial: boolean;
+  isGuest?: boolean;
+  profileSetupCompleted?: boolean;
   history: RecyclingRecord[];
 }
 
