@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with eco-forest stats, current mountain league, and streak",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "nickname": { "type": "string", "maxLength": 64 },
+        "email": { "type": "string", "maxLength": 128 },
+        "avatarUrl": { "type": "string", "maxLength": 512 },
+        "currentLeagueId": { "type": "string", "enum": ["namsan", "hallasan", "jirisan", "seoraksan", "k2", "everest"] },
+        "leagueRank": { "type": "number" },
+        "treesInCurrentMountain": { "type": "number" },
+        "totalTreesGrownAllTime": { "type": "number" },
+        "totalTreesChopped": { "type": "number" },
+        "carbonSavedGrams": { "type": "number" },
+        "recyclingStreakDays": { "type": "number" },
+        "lastActiveTimestamp": { "type": "number" },
+        "hasCompletedTutorial": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "nickname", "email", "currentLeagueId", "treesInCurrentMountain", "totalTreesGrownAllTime", "hasCompletedTutorial"]
+    },
+    "Tree": {
+      "title": "Tree",
+      "description": "Tree item growing in user's forest",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["pine", "cherry", "oak", "ginkgo", "golden_baobab", "fir"] },
+        "name": { "type": "string", "maxLength": 100 },
+        "stage": { "type": "string", "enum": ["seedling", "sprout", "young_tree", "mature_tree", "golden_tree", "chopped"] },
+        "growthPercent": { "type": "number" },
+        "plantedAt": { "type": "number" },
+        "gridIndex": { "type": "number" },
+        "choppedReason": { "type": "string", "maxLength": 200 },
+        "itemNameAtPlanting": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "type", "name", "stage", "growthPercent", "plantedAt", "gridIndex"]
+    },
+    "RecyclingRecord": {
+      "title": "RecyclingRecord",
+      "description": "Scan and verification inspection event record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "timestamp": { "type": "number" },
+        "category": { "type": "string", "maxLength": 64 },
+        "categoryName": { "type": "string", "maxLength": 100 },
+        "cleanlinessScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["PERFECT", "CLEAN", "SLIGHT_STAIN", "CONTAMINATED"] },
+        "verdict": { "type": "string", "enum": ["PLANT_SEEDLING", "CHOP_TREE"] },
+        "redStainScore": { "type": "number" },
+        "darkGrimeScore": { "type": "number" },
+        "cleanRatio": { "type": "number" },
+        "imageUri": { "type": "string", "maxLength": 2048 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "carbonSavedGrams": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "timestamp", "category", "categoryName", "cleanlinessScore", "status", "verdict"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public ranking record in a mountain league",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "nickname": { "type": "string", "maxLength": 64 },
+        "avatar": { "type": "string", "maxLength": 128 },
+        "leagueId": { "type": "string", "enum": ["namsan", "hallasan", "jirisan", "seoraksan", "k2", "everest"] },
+        "leagueRank": { "type": "number" },
+        "treesInMountain": { "type": "number" },
+        "totalGrown": { "type": "number" },
+        "streak": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "nickname", "leagueId", "treesInMountain", "totalGrown", "streak"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile with eco-forest progression and league metrics"
+    },
+    "/users/{userId}/trees/{treeId}": {
+      "schema": "Tree",
+      "description": "Tree entities planted and growing in the user forest"
+    },
+    "/users/{userId}/records/{recordId}": {
+      "schema": "RecyclingRecord",
+      "description": "User inspection and recycling verification records"
+    },
+    "/leaderboards/{leagueId}/entries/{userId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Leaderboard entry for users competing on specific mountain heights"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Plast - 분리수거로 키우는 나만의 숲과 산",
+  "description": "올바른 분리수거를 실시간 카메라로 인증해 오염도를 측정하고, 묘목을 심어 남산에서 에베레스트산까지 나만의 산을 일구는 에코 포레스트 게임 Plast",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

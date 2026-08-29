@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['id', 'nickname', 'email', 'currentLeagueId', 'treesInCurrentMountain', 'totalTreesGrownAllTime', 'hasCompletedTutorial'])
+        && data.id is string && data.id.size() <= 128
+        && data.nickname is string && data.nickname.size() <= 64
+        && data.email is string && data.email.size() <= 128
+        && data.currentLeagueId in ['namsan', 'hallasan', 'jirisan', 'seoraksan', 'k2', 'everest']
+        && data.treesInCurrentMountain is number && data.treesInCurrentMountain >= 0
+        && data.totalTreesGrownAllTime is number && data.totalTreesGrownAllTime >= 0
+        && data.hasCompletedTutorial is bool;
+    }
+
+    function isValidTree(data) {
+      return data.keys().hasAll(['id', 'userId', 'type', 'name', 'stage', 'growthPercent', 'plantedAt', 'gridIndex'])
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.type in ['pine', 'cherry', 'oak', 'ginkgo', 'golden_baobab', 'fir']
+        && data.name is string && data.name.size() <= 100
+        && data.stage in ['seedling', 'sprout', 'young_tree', 'mature_tree', 'golden_tree', 'chopped']
+        && data.growthPercent is number && data.growthPercent >= 0 && data.growthPercent <= 100
+        && data.plantedAt is number
+        && data.gridIndex is number && data.gridIndex >= 0 && data.gridIndex <= 100;
+    }
+
+    function isValidRecord(data) {
+      return data.keys().hasAll(['id', 'userId', 'timestamp', 'category', 'categoryName', 'cleanlinessScore', 'status', 'verdict'])
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.timestamp is number
+        && data.category is string && data.category.size() <= 64
+        && data.categoryName is string && data.categoryName.size() <= 100
+        && data.cleanlinessScore is number && data.cleanlinessScore >= 0 && data.cleanlinessScore <= 100
+        && data.status in ['PERFECT', 'CLEAN', 'SLIGHT_STAIN', 'CONTAMINATED']
+        && data.verdict in ['PLANT_SEEDLING', 'CHOP_TREE'];
+    }
+
+    function isValidLeaderboard(data) {
+      return data.keys().hasAll(['userId', 'nickname', 'leagueId', 'treesInMountain', 'totalGrown', 'streak'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.nickname is string && data.nickname.size() <= 64
+        && data.leagueId in ['namsan', 'hallasan', 'jirisan', 'seoraksan', 'k2', 'everest']
+        && data.treesInMountain is number && data.treesInMountain >= 0
+        && data.totalGrown is number && data.totalGrown >= 0
+        && data.streak is number && data.streak >= 0;
+    }
+
+    // User Profile
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming()) && incoming().id == userId;
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming()) && incoming().id == existing().id;
+      allow delete: if isOwner(userId);
+
+      // User's forest trees subcollection
+      match /trees/{treeId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(treeId) && isValidTree(incoming()) && incoming().userId == userId && incoming().id == treeId;
+        allow update: if isOwner(userId) && isValidId(treeId) && isValidTree(incoming()) && incoming().userId == userId;
+        allow delete: if isOwner(userId) && isValidId(treeId);
+      }
+
+      // User's recycling scan history records
+      match /records/{recordId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(recordId) && isValidRecord(incoming()) && incoming().userId == userId && incoming().id == recordId;
+        allow update: if false; // immutable audit records
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Public Mountain Leaderboard
+    match /leaderboards/{leagueId}/entries/{userId} {
+      allow read: if true;
+      allow create, update: if isOwner(userId) && isValidId(leagueId) && isValidId(userId) && isValidLeaderboard(incoming()) && incoming().userId == userId;
+      allow delete: if isOwner(userId);
+    }
+  }
+}
