@@ -3,7 +3,6 @@ import { motion } from 'motion/react';
 import { Camera, RefreshCw, X, AlertCircle, Sparkles, CheckCircle2, ShieldAlert, Zap, Layers, HelpCircle } from 'lucide-react';
 import { ItemCategory, AnalysisOutput } from '../types';
 import { analyzeRecyclingImageWithAI } from '../utils/imageAnalysis';
-import { SAMPLE_PRESETS, SampleItemPreset } from '../data/sampleScans';
 import { playSound } from '../utils/sound';
 
 interface CameraScannerProps {
@@ -33,7 +32,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [showFlash, setShowFlash] = useState<boolean>(false);
-  const [showSampleSelector, setShowSampleSelector] = useState<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -89,7 +87,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       if (e.code === 'Space' || e.key === ' ') {
         // Prevent default spacebar scrolling
         e.preventDefault();
-        if (!isProcessing && isCameraActive && !showSampleSelector && !capturedPreview) {
+        if (!isProcessing && isCameraActive && !capturedPreview) {
           captureAndAnalyze();
         }
       }
@@ -99,7 +97,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isProcessing, isCameraActive, showSampleSelector, capturedPreview, selectedCategory]);
+  }, [isProcessing, isCameraActive, capturedPreview, selectedCategory]);
 
   // Flip camera between back/front
   const toggleCamera = () => {
@@ -173,19 +171,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         } catch (e) {}
       }
     }
-  };
-
-  // Handle Testing with Preset Sample items
-  const handleSampleTest = (sample: SampleItemPreset) => {
-    playSound('click');
-    setSelectedCategory(sample.category);
-    
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      captureAndAnalyze(img, img.src);
-    };
-    img.src = sample.renderSvg();
   };
 
   const currentCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0];
@@ -272,20 +257,12 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
             <p className="text-xs text-[#6B705C] max-w-sm mb-4 leading-relaxed">
               {cameraError || '카메라 권한을 허용하시면 실시간 스트림이 활성화됩니다.'}
             </p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={startCamera}
-                className="px-5 py-2.5 rounded-full bg-[#4A7856] hover:bg-[#3E6548] text-white font-bold text-xs shadow-xs"
-              >
-                카메라 다시 연결
-              </button>
-              <button
-                onClick={() => setShowSampleSelector(true)}
-                className="px-5 py-2.5 rounded-full bg-white hover:bg-[#F0EDE5] text-[#4A7856] font-bold text-xs border border-[#E8E4D9] shadow-xs"
-              >
-                🧪 샘플 아이템으로 즉시 테스트
-              </button>
-            </div>
+            <button
+              onClick={startCamera}
+              className="px-6 py-2.5 rounded-full bg-[#4A7856] hover:bg-[#3E6548] text-white font-bold text-xs shadow-xs"
+            >
+              카메라 다시 연결
+            </button>
           </div>
         )}
 
@@ -337,12 +314,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         <div className="mb-3 sm:mb-4">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
             <span className="text-[11px] sm:text-xs text-white/70 font-medium">인증할 품목 선택</span>
-            <button
-              onClick={() => setShowSampleSelector(true)}
-              className="text-[10px] sm:text-[11px] text-[#DDE5B6] hover:text-white underline font-semibold"
-            >
-              🧪 샘플 테스트 모드
-            </button>
           </div>
           <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
             {CATEGORIES.map((cat) => {
@@ -373,14 +344,8 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
         {/* Shutter Button Action */}
         <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center justify-center gap-5 sm:gap-6">
-            <button
-              onClick={() => setShowSampleSelector(true)}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white text-xs border border-white/20 active:scale-95 transition-transform"
-              title="샘플 이미지로 테스트"
-            >
-              🧪
-            </button>
+          <div className="flex items-center justify-center gap-6">
+            <div className="w-11 sm:w-12" /> {/* Spacer for centering */}
 
             {/* Big Mechanical Shutter Trigger */}
             <button
@@ -410,75 +375,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Preset Sample Item Selector Drawer */}
-      {showSampleSelector && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-4">
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="w-full max-w-lg bg-[#F9F7F2] rounded-3xl border border-[#E8E4D9] p-6 text-[#3C4030] shadow-2xl max-h-[85vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="text-base font-bold text-[#2D3319] font-serif flex items-center gap-2">
-                  🧪 알고리즘 검증 샘플 선택
-                </h4>
-                <p className="text-xs text-[#6B705C] mt-0.5">
-                  실제 카메라가 없거나 오염도 판정 민감도를 즉시 테스트하고 싶을 때 선택하세요.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSampleSelector(false)}
-                className="p-1.5 rounded-full bg-white border border-[#E8E4D9] text-[#6B705C] hover:text-[#2D3319]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2.5">
-              {SAMPLE_PRESETS.map((sample) => (
-                <div
-                  key={sample.id}
-                  onClick={() => {
-                    setShowSampleSelector(false);
-                    handleSampleTest(sample);
-                  }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-white hover:bg-[#F0EDE5] border border-[#E8E4D9] cursor-pointer transition-all hover:border-[#7A9D54] shadow-xs group"
-                >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={sample.renderSvg()}
-                      alt={sample.name}
-                      className="w-12 h-12 rounded-xl object-cover bg-[#F9F7F2] border border-[#E8E4D9]"
-                    />
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#2D3319] group-hover:text-[#4A7856]">
-                          {sample.name}
-                        </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                          sample.expectedScore === 'high' 
-                            ? 'bg-[#DDE5B6] text-[#4A5D23]' 
-                            : 'bg-rose-100 text-rose-700'
-                        }`}>
-                          {sample.expectedScore === 'high' ? '깨끗함 (묘목 획득)' : '오염됨 (벌목 페널티)'}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#6B705C] mt-0.5">
-                        {sample.description}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-white font-bold px-3 py-1 rounded-full bg-[#4A7856] shadow-xs">
-                    인식
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 };
