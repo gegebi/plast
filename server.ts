@@ -59,6 +59,11 @@ const recyclingAnalysisSchema: Schema = {
       type: Type.STRING,
       description: 'Short name of the detected object in Korean (e.g. 투명 페트병, 엽기떡볶이 배달용기, 알루미늄 캔)'
     },
+    detectedCategory: {
+      type: Type.STRING,
+      enum: ['tteokbokki_container', 'plastic_cup', 'plastic_bottle', 'beverage_can', 'paper_carton', 'glass_bottle', 'general_plastic'],
+      description: 'Classified recycling category of the item'
+    },
     isBackgroundSeparated: {
       type: Type.BOOLEAN,
       description: 'True if background/table colors were distinguished from the actual container'
@@ -135,7 +140,9 @@ app.post('/api/analyze-recycling', async (req, res) => {
     // Clean base64 string
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
+    const isAutoDetect = !category || category === 'auto';
     const categoryNames: Record<string, string> = {
+      auto: '✨ AI 자동 감지 모드 (사진 속 품목을 AI가 스스로 식별 및 분류)',
       tteokbokki_container: '엽떡/배달용기 (플라스틱 배달용기 및 붉은 고추기름 세척 여부)',
       plastic_cup: '투명 일회용 플라스틱 컵 (음료 잔여물, 빨대 및 뚜껑 분리)',
       plastic_bottle: '투명 페트병 (비닐 라벨 제거, 뚜껑 분리, 내부 세척 및 압착)',
@@ -145,26 +152,29 @@ app.post('/api/analyze-recycling', async (req, res) => {
       general_plastic: '일반 플라스틱 용기 (음식물 세척 및 라벨 제거)'
     };
 
-    const targetCategoryDesc = categoryNames[category] || '재활용 분리수거 품목';
+    const targetCategoryDesc = categoryNames[category] || categoryNames.auto;
 
     // Highly optimized system instructions with strict token conservation
     const prompt = `당신은 대한민국 환경부의 AI 스마트 분리수거 수석 감정관입니다.
 사용자가 촬영한 사진에서 재활용 대상 물품을 분석하고 오염도와 분리배출 적합성을 판별하십시오.
 
-[선택된 품목]: ${targetCategoryDesc}
+[요청 모드]: ${targetCategoryDesc}
 
-[판정 핵심 규칙 - 배경 분리 및 정밀 검사]:
-1. **배경과 물품 분리 (중요)**: 사진의 배경(예: 붉은 목재 식탁, 갈색 바닥, 어두운 그림자, 조명 반사)을 물품의 오염으로 오인하지 마십시오. 오직 재활용 용기 표면 및 내부의 실제 오염물질만 판정하십시오.
-2. **오염도 기준**:
+[판정 핵심 규칙]:
+1. **품목 자동 분류 (Auto-Classification)**:
+   - 사진 속 물품을 식별하여 detectedItem(예: '투명 페트병', '배달 떡볶이 용기', '스타벅스 일회용 컵', '코카콜라 알루미늄 캔', '우유 종이팩' 등)과 detectedCategory('tteokbokki_container' | 'plastic_cup' | 'plastic_bottle' | 'beverage_can' | 'paper_carton' | 'glass_bottle' | 'general_plastic')를 정확히 판별하십시오.
+2. **배경과 물품 분리 (중요)**: 사진의 배경(예: 붉은 목재 식탁, 갈색 바닥, 어두운 그림자, 조명 반사)을 물품의 오염으로 오인하지 마십시오. 오직 재활용 용기 표면 및 내부의 실제 오염물질만 판정하십시오.
+3. **품목별 오염도 및 분리배출 기준**:
    - 떡볶이/배달용기: 붉은 고추기름 얼룩, 양념 찌꺼기가 남아있으면 70점 미만(CHOP_TREE). 깨끗이 씻겨 투명/하얗다면 80~100점(PLANT_SEEDLING).
-   - 페트병/일회용컵: 비닐 라벨 미제거, 음료 잔여물, 빨대 꽂혀있음 등은 감점.
-   - 캔/유리병/우유팩: 내용물 찌꺼기나 이물질이 없어야 합격.
-3. **점수 및 판정**:
+   - 투명 페트병: 비닐 라벨 미제거, 음료 잔여물, 압착 여부 검사.
+   - 일회용 플라스틱 컵: 빨대/홀더 미분리, 음료 잔여물 감점.
+   - 캔/유리병/우유팩: 내용물 찌꺼기나 이물질(담배꽁초 등)이 없어야 합격.
+4. **점수 및 판정**:
    - 85점 이상: PERFECT (무결점 분리수거) -> verdict: PLANT_SEEDLING
    - 70~84점: CLEAN (양호한 분리배출) -> verdict: PLANT_SEEDLING
    - 50~69점: SLIGHT_STAIN (경미한 오염/라벨 미제거) -> verdict: CHOP_TREE
    - 0~49점: CONTAMINATED (심각한 음식물 오염) -> verdict: CHOP_TREE
-4. 토큰 절약을 위해 간결하고 명확한 한국어로 작성하십시오.`;
+5. 토큰 절약을 위해 간결하고 명확한 한국어로 작성하십시오.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.7-flash',

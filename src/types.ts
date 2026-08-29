@@ -29,6 +29,7 @@ export interface TreeItem {
 }
 
 export type ItemCategory = 
+  | 'auto'                 // AI 자동 감지
   | 'tteokbokki_container' // 배달/엽떡 용기 (플라스틱)
   | 'plastic_cup'          // 투명 일회용 컵
   | 'plastic_bottle'       // 페트병 (라벨 제거)
@@ -88,6 +89,7 @@ export interface AnalysisOutput {
   heatmapDataUrl?: string;
   isAiAnalyzed?: boolean;
   detectedItem?: string;
+  detectedCategory?: ItemCategory;
   isBackgroundSeparated?: boolean;
   hasLabelRemoved?: boolean;
 }

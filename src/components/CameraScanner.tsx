@@ -12,6 +12,7 @@ interface CameraScannerProps {
 }
 
 const CATEGORIES: { id: ItemCategory; label: string; icon: string; hint: string }[] = [
+  { id: 'auto', label: 'AI 자동 감지', icon: '✨', hint: 'AI가 사진 속 품목(페트병, 배달용기, 캔 등)을 스스로 자동 인식합니다' },
   { id: 'tteokbokki_container', label: '엽떡/배달용기', icon: '🍲', hint: '붉은 고추기름 및 양념 얼룩을 집중 검사합니다' },
   { id: 'plastic_cup', label: '투명 일회용 컵', icon: '🥤', hint: '음료 잔여물 및 빨대/홀더 분리 여부 검사' },
   { id: 'plastic_bottle', label: '투명 페트병', icon: '🍾', hint: '비닐 라벨 제거 및 깨끗한 압착 상태 검사' },
@@ -24,7 +25,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   onClose,
   onScanComplete
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<ItemCategory>('tteokbokki_container');
+  const [selectedCategory, setSelectedCategory] = useState<ItemCategory>('auto');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
@@ -117,9 +118,12 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       // Execute multimodal Gemini Vision AI analysis (with local vision fallback)
       const result = await analyzeRecyclingImageWithAI(targetSource, selectedCategory);
 
+      // Determine finalized category (if AI auto-detected or specific)
+      const finalCategory: ItemCategory = result.detectedCategory || (selectedCategory === 'auto' ? 'general_plastic' : selectedCategory);
+
       // Trigger scan completed callback
       setTimeout(() => {
-        onScanComplete(result, captureUri, selectedCategory);
+        onScanComplete(result, captureUri, finalCategory);
       }, 500);
 
     } catch (err) {
@@ -238,8 +242,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
             </div>
 
             {/* Live Inspection Sensor HUD Label */}
-            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/85 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#7A9D54]/50 text-[11px] font-sans text-white">
-              {currentCategoryInfo.icon} {currentCategoryInfo.label} 감지 중
+            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/85 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#7A9D54]/50 text-[11px] font-sans text-white flex items-center gap-1.5">
+              <span>{currentCategoryInfo.icon}</span>
+              <span>{selectedCategory === 'auto' ? 'AI 품목 자동 감지 & 오염도 판별 중' : `${currentCategoryInfo.label} 감지 중`}</span>
             </div>
           </div>
         </div>

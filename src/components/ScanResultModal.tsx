@@ -93,9 +93,14 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
           </div>
 
           {result.detectedItem && (
-            <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-[#F0EDE5] text-[#4A5D23] text-xs font-medium flex items-center justify-between">
-              <span>🎯 AI 인식 대상:</span>
-              <span className="font-bold text-[#2D3319]">{result.detectedItem}</span>
+            <div className="mb-3 px-3.5 py-2 rounded-xl bg-[#E9EDC9]/80 border border-[#DDE5B6] text-[#2D3319] text-xs font-medium flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">✨</span>
+                <span className="text-[#4A5D23] font-semibold">AI 자동 품목 분류:</span>
+              </div>
+              <span className="font-extrabold text-[#2D3319] bg-white px-2.5 py-0.5 rounded-lg border border-[#CCD5AE]">
+                {result.detectedItem}
+              </span>
             </div>
           )}
 

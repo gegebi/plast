@@ -75,6 +75,7 @@ export async function analyzeRecyclingImageWithAI(
           heatmapDataUrl,
           isAiAnalyzed: true,
           detectedItem: aiData.detectedItem,
+          detectedCategory: aiData.detectedCategory || (category === 'auto' ? 'general_plastic' : category),
           isBackgroundSeparated: true,
           hasLabelRemoved: aiData.hasLabelRemoved,
         };
@@ -85,7 +86,13 @@ export async function analyzeRecyclingImageWithAI(
   }
 
   // Graceful fallback to local algorithmic pixel CV
-  return analyzeRecyclingImage(imageSource, category);
+  const fallbackCategory = category === 'auto' ? 'tteokbokki_container' : category;
+  const localResult = await analyzeRecyclingImage(imageSource, fallbackCategory);
+  return {
+    ...localResult,
+    detectedCategory: fallbackCategory,
+    detectedItem: fallbackCategory === 'tteokbokki_container' ? '배달/플라스틱 용기' : undefined
+  };
 }
 
 function generateHeatmapOverlay(canvas: HTMLCanvasElement, isClean: boolean): string {

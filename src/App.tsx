@@ -350,6 +350,7 @@ export default function App() {
     });
 
     const categoryNames: Record<ItemCategory, string> = {
+      auto: 'AI 자동 감지',
       tteokbokki_container: '엽떡/배달용기',
       plastic_cup: '투명 일회용 컵',
       plastic_bottle: '투명 페트병',
@@ -359,11 +360,14 @@ export default function App() {
       general_plastic: '일반 플라스틱'
     };
 
+    const resolvedCategory: ItemCategory = (category === 'auto' ? (result.detectedCategory || 'general_plastic') : category);
+    const resolvedItemName = result.detectedItem || categoryNames[resolvedCategory];
+
     const newRecord: RecyclingRecord = {
       id: `rec_${Date.now()}`,
       timestamp: Date.now(),
-      category,
-      categoryName: categoryNames[category],
+      category: resolvedCategory,
+      categoryName: resolvedItemName,
       cleanlinessScore: result.cleanlinessScore,
       status: result.status,
       verdict: result.verdict,
@@ -385,12 +389,12 @@ export default function App() {
       const newTree: TreeItem = {
         id: `tree_${Date.now()}`,
         type: randomType,
-        name: randomType === 'golden_baobab' ? '황금 에코 거목' : `${categoryNames[category]} 묘목`,
+        name: randomType === 'golden_baobab' ? '황금 에코 거목' : `${resolvedItemName} 묘목`,
         stage: 'seedling',
         growthPercent: result.status === 'PERFECT' ? 35 : 10,
         plantedAt: Date.now(),
         gridIndex: trees.length,
-        itemNameAtPlanting: `${categoryNames[category]} (${result.cleanlinessScore}점 세척)`
+        itemNameAtPlanting: `${resolvedItemName} (${result.cleanlinessScore}점 세척)`
       };
 
       setTrees(prev => [...prev, newTree]);
