@@ -4,6 +4,7 @@ import { UserProfile, RecyclingRecord, TreeItem } from '../types';
 import { MOUNTAIN_LEAGUES } from '../data/mountains';
 import { TreePine, Flame, Award, Trash2, Calendar, X, RefreshCw, LogOut, CheckCircle2, AlertTriangle, ShieldCheck, Sprout, Axe } from 'lucide-react';
 import { playSound } from '../utils/sound';
+import { UserAvatar } from './UserAvatar';
 
 interface ForestStatsModalProps {
   user: UserProfile;
@@ -46,13 +47,7 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#E9EDC9] border border-[#CCD5AE] flex items-center justify-center text-2xl text-[#4A5D23] shadow-xs">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover rounded-2xl" />
-              ) : (
-                '🌿'
-              )}
-            </div>
+            <UserAvatar avatar={user.avatarUrl} nickname={user.nickname} size="lg" />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-sans font-extrabold text-[#2D3319]">{user.nickname}</h3>

@@ -227,22 +227,37 @@ export const firestoreService = {
   // --- Mountain League Leaderboards ---
   async updateLeaderboard(leagueOrUser: MountainId | UserProfile, maybeUser?: UserProfile): Promise<void> {
     const user = typeof leagueOrUser === 'string' ? maybeUser : leagueOrUser;
-    if (!user) return;
+    if (!user || user.isGuest) return;
     const leagueId = typeof leagueOrUser === 'string' ? leagueOrUser : user.currentLeagueId;
     const path = `leaderboards/${leagueId}/entries/${user.id}`;
+    
+    // Clean nickname
+    let cleanNick = (user.nickname || '').trim();
+    if (!cleanNick) cleanNick = '에코러너';
+    if (cleanNick.includes('@')) cleanNick = cleanNick.split('@')[0];
+
     try {
       await setDoc(doc(db, 'leaderboards', leagueId, 'entries', user.id), {
         userId: user.id,
-        nickname: user.nickname,
+        nickname: cleanNick,
         avatar: user.avatarUrl || '🌱',
         leagueId: leagueId,
-        leagueRank: user.leagueRank,
-        treesInMountain: user.treesInCurrentMountain,
-        totalGrown: user.totalTreesGrownAllTime,
-        streak: user.recyclingStreakDays,
-      });
+        leagueRank: user.leagueRank || 1,
+        treesInMountain: Number(user.treesInCurrentMountain) || 0,
+        totalGrown: Number(user.totalTreesGrownAllTime) || 0,
+        streak: Number(user.recyclingStreakDays) || 1,
+      }, { merge: true });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
+    }
+  },
+
+  async removeLeaderboardEntry(leagueId: MountainId, userId: string): Promise<void> {
+    const path = `leaderboards/${leagueId}/entries/${userId}`;
+    try {
+      await deleteDoc(doc(db, 'leaderboards', leagueId, 'entries', userId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
     }
   },
 
@@ -254,19 +269,27 @@ export const firestoreService = {
         const entries: LeaderboardUser[] = [];
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
+          let cleanNick = (data.nickname || '').trim();
+          if (!cleanNick || cleanNick.startsWith('user_') || cleanNick.startsWith('guest_')) {
+            cleanNick = '에코러너';
+          }
+          if (cleanNick.includes('@')) {
+            cleanNick = cleanNick.split('@')[0];
+          }
+
           entries.push({
             id: data.userId || docSnap.id,
-            nickname: data.nickname,
+            nickname: cleanNick,
             avatar: data.avatar || '🌱',
-            leagueId: data.leagueId,
-            leagueRank: data.leagueRank || 1,
-            treesInMountain: data.treesInMountain || 0,
-            totalGrown: data.totalGrown || 0,
-            streak: data.streak || 1,
+            leagueId: data.leagueId || leagueId,
+            leagueRank: Number(data.leagueRank) || 1,
+            treesInMountain: Number(data.treesInMountain) || 0,
+            totalGrown: Number(data.totalGrown) || 0,
+            streak: Number(data.streak) || 1,
           });
         });
         // Sort descending by trees in current mountain, then total grown
-        entries.sort((a, b) => b.treesInMountain - a.treesInMountain || b.totalGrown - a.totalGrown);
+        entries.sort((a, b) => (b.treesInMountain - a.treesInMountain) || (b.totalGrown - a.totalGrown));
         // Assign ranks
         entries.forEach((e, idx) => {
           e.leagueRank = idx + 1;

@@ -2,14 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { UserProfile, MountainId, LeaderboardUser } from '../types';
 import { MOUNTAIN_LEAGUES, LEAGUE_ORDER } from '../data/mountains';
-import { Trophy, Medal, Mountain, Heart, UserCheck, Flame, X, Sparkles } from 'lucide-react';
+import { Trophy, Medal, Mountain, Heart, UserCheck, Flame, X, Sparkles, Radio, CheckCircle2 } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { firestoreService } from '../services/firestoreService';
+import { UserAvatar } from './UserAvatar';
 
 interface LeaderboardModalProps {
   user: UserProfile;
   onClose: () => void;
 }
+
+// Clean and sanitize any raw strings into friendly eco nicknames
+const sanitizeNickname = (name?: string): string => {
+  if (!name || name.trim() === '') return '에코 러너';
+  let clean = name.trim();
+  if (clean.includes('@')) {
+    clean = clean.split('@')[0];
+  }
+  if (clean.startsWith('guest_') || clean.startsWith('user_')) {
+    return '초록이';
+  }
+  return clean;
+};
 
 // Baseline competition data for each mountain league
 const getMockLeagueUsers = (leagueId: MountainId): Omit<LeaderboardUser, 'leagueId' | 'leagueRank' | 'isCurrentUser'>[] => {
@@ -19,14 +33,14 @@ const getMockLeagueUsers = (leagueId: MountainId): Omit<LeaderboardUser, 'league
   const mockUsers: Record<MountainId, Omit<LeaderboardUser, 'leagueId' | 'leagueRank' | 'isCurrentUser'>[]> = {
     namsan: [
       { id: 'user_1', nickname: '초록지킴이', avatar: '🌱', treesInMountain: Math.min(maxTrees - 1, 48), totalGrown: 48, streak: 12 },
-      { id: 'user_2', nickname: '엽떡세척달인', avatar: '🍲', treesInMountain: 42, totalGrown: 42, streak: 8 },
+      { id: 'user_2', nickname: '투명페트수호자', avatar: '🍾', treesInMountain: 42, totalGrown: 42, streak: 8 },
       { id: 'user_3', nickname: '맑은하늘', avatar: '🌤️', treesInMountain: 35, totalGrown: 35, streak: 5 },
       { id: 'user_4', nickname: '에코히어로', avatar: '🦸', treesInMountain: 28, totalGrown: 28, streak: 4 },
-      { id: 'user_5', nickname: '페트병수호자', avatar: '🍾', treesInMountain: 20, totalGrown: 20, streak: 3 },
-      { id: 'user_6', nickname: '그린새싹', avatar: '🌿', treesInMountain: 14, totalGrown: 14, streak: 2 },
+      { id: 'user_5', nickname: '분리수거달인', avatar: '🌿', treesInMountain: 20, totalGrown: 20, streak: 3 },
+      { id: 'user_6', nickname: '푸른새싹', avatar: '🌲', treesInMountain: 14, totalGrown: 14, streak: 2 },
     ],
     hallasan: [
-      { id: 'user_h1', nickname: '백록담의정령', avatar: '🦌', treesInMountain: 95, totalGrown: 145, streak: 24 },
+      { id: 'user_h1', nickname: '백록담정령', avatar: '🦌', treesInMountain: 95, totalGrown: 145, streak: 24 },
       { id: 'user_h2', nickname: '제주바람', avatar: '🌊', treesInMountain: 82, totalGrown: 132, streak: 15 },
       { id: 'user_h3', nickname: '동백꽃필무렵', avatar: '🌺', treesInMountain: 64, totalGrown: 114, streak: 9 },
       { id: 'user_h4', nickname: '한라봉요정', avatar: '🍊', treesInMountain: 45, totalGrown: 95, streak: 7 },
@@ -60,47 +74,51 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   const [selectedLeague, setSelectedLeague] = useState<MountainId>(user.currentLeagueId);
   const [cheeredUserIds, setCheeredUserIds] = useState<Set<string>>(new Set());
   const [liveEntries, setLiveEntries] = useState<LeaderboardUser[]>([]);
+  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(true);
 
   const currentLeagueInfo = MOUNTAIN_LEAGUES[selectedLeague];
 
-  // Subscribe to real-time Firestore leaderboard
+  // Subscribe to real-time Firestore leaderboard for selected league
   useEffect(() => {
+    setIsLiveConnected(true);
     const unsub = firestoreService.subscribeLeaderboard(selectedLeague, (entries) => {
       setLiveEntries(entries);
     });
     return () => unsub();
   }, [selectedLeague]);
 
-  // Merge live Firestore entries with mock community entries
+  // Combine live Firestore entries and baseline community entries
   const mockList = getMockLeagueUsers(selectedLeague);
   const combinedMap = new Map<string, LeaderboardUser>();
 
-  // Add mock users first
+  // 1. Add mock users as base placeholders
   mockList.forEach((m, idx) => {
     combinedMap.set(m.id, {
       ...m,
+      nickname: sanitizeNickname(m.nickname),
       leagueId: selectedLeague,
       leagueRank: idx + 1,
       isCurrentUser: m.id === user.id
     });
   });
 
-  // Overlay live Firestore entries
+  // 2. Overlay real live entries from Firestore (overriding or appending)
   liveEntries.forEach((entry) => {
     combinedMap.set(entry.id, {
       ...entry,
+      nickname: sanitizeNickname(entry.nickname),
       leagueId: selectedLeague,
       isCurrentUser: entry.id === user.id
     });
   });
 
-  // If current user is in this league, ensure they are present
+  // 3. Ensure current user is present if viewing their current league
   if (user.currentLeagueId === selectedLeague) {
     const existing = combinedMap.get(user.id);
     combinedMap.set(user.id, {
       id: user.id,
-      nickname: user.nickname,
-      avatar: user.avatarUrl || '🌟',
+      nickname: sanitizeNickname(user.nickname),
+      avatar: user.avatarUrl || '🌱',
       leagueId: selectedLeague,
       leagueRank: existing?.leagueRank || 1,
       treesInMountain: user.treesInCurrentMountain,
@@ -110,8 +128,9 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     });
   }
 
+  // 4. Sort and assign ranks accurately
   const leaderboardUsers = Array.from(combinedMap.values());
-  leaderboardUsers.sort((a, b) => b.treesInMountain - a.treesInMountain || b.totalGrown - a.totalGrown);
+  leaderboardUsers.sort((a, b) => (b.treesInMountain - a.treesInMountain) || (b.totalGrown - a.totalGrown));
   leaderboardUsers.forEach((item, index) => {
     item.leagueRank = index + 1;
   });
@@ -124,9 +143,8 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     setCheeredUserIds(prev => new Set(prev).add(userId));
   };
 
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -142,9 +160,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                 산(Mountain) 리그 랭킹
               </h3>
             </div>
-            <p className="text-xs text-[#6B705C] mt-1">
-              각 산별로 깨끗한 분리수거를 실천하는 에코 러너들의 실시간 순위입니다.
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                실시간 데이터 연동 중
+              </span>
+              <span className="text-xs text-[#6B705C]">
+                • {leaderboardUsers.length}명 참여 중
+              </span>
+            </div>
           </div>
           <button
             onClick={() => { playSound('click'); onClose(); }}
@@ -160,16 +184,19 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             <div className="w-12 h-12 rounded-xl bg-[#7A9D54] text-white flex items-center justify-center font-black text-lg shadow-sm">
               #{currentUserEntry ? currentUserEntry.leagueRank : user.leagueRank}
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm text-[#2D3319]">{user.nickname}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold border border-[#CCD5AE]">
-                  내 랭킹
-                </span>
+            <div className="flex items-center gap-2.5">
+              <UserAvatar avatar={user.avatarUrl} nickname={user.nickname} size="md" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-sm text-[#2D3319]">{sanitizeNickname(user.nickname)}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold border border-[#CCD5AE]">
+                    내 순위
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#4A7856] mt-0.5">
+                  {currentLeagueInfo.name} 리그 {currentUserEntry ? currentUserEntry.leagueRank : user.leagueRank}위
+                </p>
               </div>
-              <p className="text-xs font-bold text-[#4A7856] mt-0.5">
-                {currentLeagueInfo.name} 리그 {currentUserEntry ? currentUserEntry.leagueRank : user.leagueRank}위
-              </p>
             </div>
           </div>
           <div className="text-right">
@@ -209,7 +236,6 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         {/* Leaderboard Table List */}
         <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
           {leaderboardUsers.map((item) => {
-            const isTop3 = item.leagueRank <= 3;
             const hasCheered = cheeredUserIds.has(item.id);
 
             return (
@@ -223,7 +249,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               >
                 <div className="flex items-center gap-3">
                   {/* Rank Badge */}
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs ${
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 ${
                     item.leagueRank === 1
                       ? 'bg-[#E2B842] text-[#2D3319] shadow-xs'
                       : item.leagueRank === 2
@@ -235,7 +261,8 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     {item.leagueRank === 1 ? '🥇' : item.leagueRank === 2 ? '🥈' : item.leagueRank === 3 ? '🥉' : item.leagueRank}
                   </div>
 
-                  <span className="text-xl">{item.avatar}</span>
+                  {/* Clean Avatar Graphic or Photo */}
+                  <UserAvatar avatar={item.avatar} nickname={item.nickname} size="sm" />
 
                   <div>
                     <div className="flex items-center gap-1.5">
@@ -262,7 +289,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                 {!item.isCurrentUser && (
                   <button
                     onClick={() => handleCheer(item.id)}
-                    className={`p-2 rounded-xl transition-all ${
+                    className={`p-2 rounded-xl transition-all active:scale-95 ${
                       hasCheered
                         ? 'bg-rose-50 text-rose-600 border border-rose-200'
                         : 'bg-[#F0EDE5] hover:bg-rose-50 text-[#8C8F7A] hover:text-rose-600'

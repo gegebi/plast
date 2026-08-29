@@ -73,7 +73,7 @@
       "properties": {
         "userId": { "type": "string", "maxLength": 128 },
         "nickname": { "type": "string", "maxLength": 64 },
-        "avatar": { "type": "string", "maxLength": 128 },
+        "avatar": { "type": "string", "maxLength": 512 },
         "leagueId": { "type": "string", "enum": ["namsan", "hallasan", "jirisan", "seoraksan", "k2", "everest"] },
         "leagueRank": { "type": "number" },
         "treesInMountain": { "type": "number" },

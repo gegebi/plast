@@ -86,6 +86,10 @@ export interface AnalysisOutput {
   carbonSavedGrams: number;
   xpAwarded: number;
   heatmapDataUrl?: string;
+  isAiAnalyzed?: boolean;
+  detectedItem?: string;
+  isBackgroundSeparated?: boolean;
+  hasLabelRemoved?: boolean;
 }
 
 export interface LeaderboardUser {

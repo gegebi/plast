@@ -1,7 +1,108 @@
 import { AnalysisOutput, ItemCategory } from '../types';
 
 /**
- * Computer Vision Pixel Analysis (Non-AI algorithmic approach)
+ * High-Precision Multimodal Gemini Vision AI Analyzer
+ * Sends an optimized, downscaled image to the server-side Gemini 2.5/3.7 Flash model.
+ * Performs background-subject separation (ignoring wood tables, red cloths, shadows)
+ * and evaluates container cleanliness, label removal, and leftover grease.
+ */
+export async function analyzeRecyclingImageWithAI(
+  imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+  category: ItemCategory
+): Promise<AnalysisOutput> {
+  try {
+    // 1. Prepare optimized, lightweight image (max 480x480) for minimal token footprint (<300 image tokens)
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas 2D context not available');
+
+    const maxDim = 480;
+    let width = ('videoWidth' in imageSource && imageSource.videoWidth) || imageSource.width || 480;
+    let height = ('videoHeight' in imageSource && imageSource.videoHeight) || imageSource.height || 480;
+
+    if (width > height) {
+      if (width > maxDim) {
+        height = Math.round((height * maxDim) / width);
+        width = maxDim;
+      }
+    } else {
+      if (height > maxDim) {
+        width = Math.round((width * maxDim) / height);
+        height = maxDim;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(imageSource, 0, 0, width, height);
+
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.82);
+
+    // 2. Call server-side API
+    const response = await fetch('/api/analyze-recycling', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageBase64,
+        mimeType: 'image/jpeg',
+        category,
+      }),
+    });
+
+    if (response.ok) {
+      const json = await response.json();
+      if (json.success && json.data) {
+        const aiData = json.data;
+
+        // Also generate lightweight visual highlight
+        const heatmapDataUrl = generateHeatmapOverlay(canvas, aiData.cleanlinessScore >= 70);
+
+        return {
+          cleanlinessScore: Number(aiData.cleanlinessScore) || 75,
+          status: aiData.status || (aiData.cleanlinessScore >= 70 ? 'CLEAN' : 'CONTAMINATED'),
+          verdict: aiData.verdict || (aiData.cleanlinessScore >= 70 ? 'PLANT_SEEDLING' : 'CHOP_TREE'),
+          redStainPercent: Number(aiData.redStainPercent) || 0,
+          darkGrimePercent: Number(aiData.darkGrimePercent) || 0,
+          surfaceUniformity: Math.max(0, 100 - (Number(aiData.redStainPercent) || 0) - (Number(aiData.darkGrimePercent) || 0)),
+          feedbackTitle: aiData.feedbackTitle || '🤖 AI 정밀 판별 완료',
+          feedbackMessage: aiData.feedbackMessage || 'AI가 배경을 분리하고 용기 오염도를 정밀 판정했습니다.',
+          rewardText: aiData.rewardText || (aiData.verdict === 'PLANT_SEEDLING' ? '새로운 묘목 1그루 획득!' : '물로 헹궈 다시 인증해보세요!'),
+          penaltyText: aiData.penaltyText,
+          carbonSavedGrams: Number(aiData.carbonSavedGrams) || (aiData.verdict === 'PLANT_SEEDLING' ? 120 : 0),
+          xpAwarded: Number(aiData.xpAwarded) || (aiData.verdict === 'PLANT_SEEDLING' ? 100 : 0),
+          heatmapDataUrl,
+          isAiAnalyzed: true,
+          detectedItem: aiData.detectedItem,
+          isBackgroundSeparated: true,
+          hasLabelRemoved: aiData.hasLabelRemoved,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Gemini AI analysis failed or offline, falling back to local vision engine:', err);
+  }
+
+  // Graceful fallback to local algorithmic pixel CV
+  return analyzeRecyclingImage(imageSource, category);
+}
+
+function generateHeatmapOverlay(canvas: HTMLCanvasElement, isClean: boolean): string {
+  const heatCanvas = document.createElement('canvas');
+  heatCanvas.width = canvas.width;
+  heatCanvas.height = canvas.height;
+  const ctx = heatCanvas.getContext('2d');
+  if (!ctx) return '';
+
+  ctx.fillStyle = isClean ? 'rgba(74, 222, 128, 0.15)' : 'rgba(239, 68, 68, 0.2)';
+  ctx.fillRect(0, 0, heatCanvas.width, heatCanvas.height);
+
+  return heatCanvas.toDataURL('image/png');
+}
+
+/**
+ * Computer Vision Pixel Analysis (Local algorithmic fallback)
  * Evaluates cleanliness, food sauce/oil contamination (e.g. tteokbokki chili oil),
  * dark residues, and surface clarity using HTML5 Canvas pixel manipulation.
  */
@@ -16,7 +117,7 @@ export async function analyzeRecyclingImage(
     throw new Error('Canvas 2D context not available');
   }
 
-  // Work on a standardized 320x320 processing dimension for speed and consistency
+  // Standardized 320x320 processing dimension for speed and consistency
   const processWidth = 320;
   const processHeight = 320;
   canvas.width = processWidth;
@@ -39,7 +140,7 @@ export async function analyzeRecyclingImage(
   let cleanSurfacePixels = 0;
   let transparentOrWhitePixels = 0;
 
-  // Focus on the central ROI (Region of Interest - inner 70% where the container is focused)
+  // Focus on the central ROI (inner 70%)
   const marginX = Math.floor(processWidth * 0.15);
   const marginY = Math.floor(processHeight * 0.15);
 
@@ -49,7 +150,6 @@ export async function analyzeRecyclingImage(
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-      // const a = data[idx + 3];
 
       totalSampledPixels++;
 
@@ -73,22 +173,19 @@ export async function analyzeRecyclingImage(
       const hueDeg = h * 360;
 
       // 1. Red / Orange Chili Oil & Tteokbokki sauce detection:
-      // Hue around 345° ~ 360° or 0° ~ 45° with notable saturation and brightness
       const isRedChiliStain = 
         ((hueDeg >= 340 || hueDeg <= 42) && s > 0.32 && v > 0.35 && r > g * 1.15 && r > b * 1.35) ||
         (r > 120 && g < 100 && b < 90 && (r - g > 30) && (r - b > 40));
 
-      // 2. Dark Grime & Dried food residue (low brightness in central region)
+      // 2. Dark Grime & Dried food residue
       const isDarkGrime = v < 0.22 && !isRedChiliStain;
 
       // 3. Clean plastic / White container / Clear PET
-      // Low saturation, moderate to high brightness
       const isClean = (s < 0.22 && v > 0.40) || (s < 0.30 && v > 0.70);
 
       if (isRedChiliStain) {
         redChiliOilPixels++;
         if (heatData) {
-          // Heatmap: Bright Red / Orange
           heatData.data[idx] = 255;
           heatData.data[idx + 1] = 40;
           heatData.data[idx + 2] = 0;
@@ -97,7 +194,6 @@ export async function analyzeRecyclingImage(
       } else if (isDarkGrime) {
         darkGrimePixels++;
         if (heatData) {
-          // Heatmap: Deep Purple/Black warning
           heatData.data[idx] = 160;
           heatData.data[idx + 1] = 0;
           heatData.data[idx + 2] = 180;
@@ -107,7 +203,6 @@ export async function analyzeRecyclingImage(
         cleanSurfacePixels++;
         transparentOrWhitePixels++;
         if (heatData) {
-          // Heatmap: Emerald Green for clean zone
           heatData.data[idx] = 16;
           heatData.data[idx + 1] = 185;
           heatData.data[idx + 2] = 129;
@@ -115,7 +210,6 @@ export async function analyzeRecyclingImage(
         }
       } else {
         if (heatData) {
-          // Neutral background
           heatData.data[idx] = 100;
           heatData.data[idx + 1] = 116;
           heatData.data[idx + 2] = 139;
@@ -133,21 +227,18 @@ export async function analyzeRecyclingImage(
   const darkGrimePercent = Math.min(100, Math.round((darkGrimePixels / totalSampledPixels) * 100 * 2.8));
   const cleanRatio = Math.min(100, Math.round((cleanSurfacePixels / totalSampledPixels) * 100));
 
-  // Category specific adjustments
   let categoryToleranceMultiplier = 1.0;
   if (category === 'tteokbokki_container') {
-    categoryToleranceMultiplier = 1.2; // Tteokbokki containers are heavily scrutinized for red grease!
+    categoryToleranceMultiplier = 1.2;
   } else if (category === 'plastic_cup') {
     categoryToleranceMultiplier = 1.0;
   } else if (category === 'beverage_can') {
     categoryToleranceMultiplier = 0.9;
   }
 
-  // Calculate Base Cleanliness Score (0 - 100)
   const penalty = (redStainPercent * 2.2 + darkGrimePercent * 1.5) * categoryToleranceMultiplier;
   let cleanlinessScore = Math.max(0, Math.min(100, Math.round(100 - penalty + (cleanRatio * 0.15))));
 
-  // Determine Verdict and Status
   let status: AnalysisOutput['status'];
   let verdict: AnalysisOutput['verdict'];
   let feedbackTitle = '';
@@ -177,7 +268,7 @@ export async function analyzeRecyclingImage(
     xpAwarded = 100;
   } else if (cleanlinessScore >= 50) {
     status = 'SLIGHT_STAIN';
-    verdict = 'CHOP_TREE'; // Warning or minor chop
+    verdict = 'CHOP_TREE';
     feedbackTitle = '⚠️ 미세 오염 및 기름때 잔여물 감지';
     feedbackMessage = category === 'tteokbokki_container'
       ? '용기 모서리에 고추기름 흔적이 남아있습니다. 주방세제로 1회 더 헹구거나 햇빛에 반나절 말려주세요.'
@@ -214,6 +305,7 @@ export async function analyzeRecyclingImage(
     penaltyText,
     carbonSavedGrams,
     xpAwarded,
-    heatmapDataUrl
+    heatmapDataUrl,
+    isAiAnalyzed: false,
   };
 }

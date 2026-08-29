@@ -74,13 +74,30 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
         {/* Cleanliness Score Gauge */}
         <div className="bg-white border border-[#E8E4D9] rounded-2xl p-4 mb-5 shadow-xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#6B705C]">비전 알고리즘 청결도 점수</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[#6B705C]">
+                {result.isAiAnalyzed ? 'Gemini AI 정밀 청결도' : '비전 알고리즘 청결도'}
+              </span>
+              {result.isAiAnalyzed && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                  배경 분리 완료
+                </span>
+              )}
+            </div>
             <span className={`text-xl font-extrabold ${
               result.cleanlinessScore >= 80 ? 'text-[#4A7856]' : result.cleanlinessScore >= 50 ? 'text-[#E2B842]' : 'text-rose-600'
             }`}>
               {result.cleanlinessScore}점 / 100점
             </span>
           </div>
+
+          {result.detectedItem && (
+            <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-[#F0EDE5] text-[#4A5D23] text-xs font-medium flex items-center justify-between">
+              <span>🎯 AI 인식 대상:</span>
+              <span className="font-bold text-[#2D3319]">{result.detectedItem}</span>
+            </div>
+          )}
 
           {/* Progress Bar */}
           <div className="w-full h-3 bg-[#F0EDE5] rounded-full overflow-hidden p-0.5 border border-[#E8E4D9]">

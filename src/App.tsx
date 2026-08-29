@@ -83,6 +83,9 @@ export default function App() {
 
       if (remoteUser) {
         setUser(remoteUser);
+        if (remoteUser.profileSetupCompleted) {
+          firestoreService.updateLeaderboard(remoteUser.currentLeagueId, remoteUser);
+        }
         if (!remoteUser.profileSetupCompleted) {
           // Open profile / nickname setup screen for Google login
           setIsProfileSetupOpen(true);
@@ -440,6 +443,7 @@ export default function App() {
     const next = getNextLeague(user.currentLeagueId);
     if (!next) return;
 
+    const prevLeagueId = user.currentLeagueId;
     const updatedUser: UserProfile = {
       ...user,
       currentLeagueId: next.id,
@@ -451,6 +455,7 @@ export default function App() {
 
     if (firebaseUser && !user.isGuest) {
       firestoreService.saveUserProfile(updatedUser);
+      firestoreService.removeLeaderboardEntry(prevLeagueId, user.id);
       firestoreService.updateLeaderboard(next.id, updatedUser);
     }
 

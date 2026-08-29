@@ -65,6 +65,7 @@ service cloud.firestore {
       return data.keys().hasAll(['userId', 'nickname', 'leagueId', 'treesInMountain', 'totalGrown', 'streak'])
         && data.userId is string && data.userId.size() <= 128
         && data.nickname is string && data.nickname.size() <= 64
+        && (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 512))
         && data.leagueId in ['namsan', 'hallasan', 'jirisan', 'seoraksan', 'k2', 'everest']
         && data.treesInMountain is number && data.treesInMountain >= 0
         && data.totalGrown is number && data.totalGrown >= 0

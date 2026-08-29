@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Camera, RefreshCw, X, AlertCircle, Sparkles, CheckCircle2, ShieldAlert, Zap, Layers, HelpCircle } from 'lucide-react';
 import { ItemCategory, AnalysisOutput } from '../types';
-import { analyzeRecyclingImage } from '../utils/imageAnalysis';
+import { analyzeRecyclingImageWithAI } from '../utils/imageAnalysis';
 import { SAMPLE_PRESETS, SampleItemPreset } from '../data/sampleScans';
 import { playSound } from '../utils/sound';
 
@@ -114,8 +114,8 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         throw new Error('촬영 대상 소스가 없습니다.');
       }
 
-      // Execute algorithmic computer vision analysis
-      const result = await analyzeRecyclingImage(targetSource, selectedCategory);
+      // Execute multimodal Gemini Vision AI analysis (with local vision fallback)
+      const result = await analyzeRecyclingImageWithAI(targetSource, selectedCategory);
 
       // Trigger scan completed callback
       setTimeout(() => {
@@ -164,12 +164,12 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         </button>
 
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1.5 text-xs font-extrabold text-[#4A5D23] bg-[#DDE5B6] px-3.5 py-1 rounded-full border border-[#CCD5AE] shadow-xs">
-            <Zap className="w-3.5 h-3.5 text-[#7A9D54] fill-[#7A9D54]" />
-            <span>실시간 날것(Raw) 즉시 촬영</span>
+          <div className="flex items-center justify-center gap-1.5 text-xs font-extrabold text-[#2D3319] bg-[#DDE5B6] px-3.5 py-1 rounded-full border border-[#CCD5AE] shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#4A7856] fill-[#4A7856]" />
+            <span>Gemini Vision AI 오염도 판별</span>
           </div>
           <p className="text-[11px] text-white/80 mt-1">
-            갤러리 업로드 불가 • 실시간 카메라 촬영만 허용
+            배경 분리 & 물체 인식 • 실시간 카메라 즉시 촬영
           </p>
         </div>
 
@@ -246,10 +246,14 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
         {/* Processing Indicator */}
         {isProcessing && (
-          <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-full border-4 border-[#7A9D54] border-t-transparent animate-spin" />
-            <p className="text-sm font-bold text-white animate-pulse">
-              비전 알고리즘으로 오염도 픽셀 측정 중...
+          <div className="absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
+            <div className="w-14 h-14 rounded-full border-4 border-[#7A9D54] border-t-transparent animate-spin" />
+            <div className="flex items-center gap-1.5 text-sm font-bold text-white animate-pulse">
+              <Sparkles className="w-4 h-4 text-[#FDE047]" />
+              <span>Gemini Vision AI가 배경을 분리하고 오염도를 정밀 분석 중...</span>
+            </div>
+            <p className="text-xs text-white/70 max-w-xs">
+              식탁 색상, 그림자, 조명 반사를 걸러내고 실제 용기 청결도를 판별합니다.
             </p>
           </div>
         )}
