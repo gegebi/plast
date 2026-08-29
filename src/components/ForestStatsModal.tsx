@@ -5,6 +5,7 @@ import { MOUNTAIN_LEAGUES } from '../data/mountains';
 import { TreePine, Flame, Award, Trash2, Calendar, X, RefreshCw, LogOut, CheckCircle2, AlertTriangle, ShieldCheck, Sprout, Axe } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { UserAvatar } from './UserAvatar';
+import { sanitizeNickname } from '../utils/userUtils';
 
 interface ForestStatsModalProps {
   user: UserProfile;
@@ -21,20 +22,23 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
   onLogout,
   onEditProfile,
 }) => {
-  const currentMountain = MOUNTAIN_LEAGUES[user.currentLeagueId];
-  const totalCarbonKg = (user.carbonSavedGrams / 1000).toFixed(2);
+  const currentMountain = MOUNTAIN_LEAGUES[user.currentLeagueId] || MOUNTAIN_LEAGUES.namsan;
+  const totalCarbonKg = ((user.carbonSavedGrams || 0) / 1000).toFixed(2);
 
-  const cleanRecordsCount = user.history.filter(h => h.verdict === 'PLANT_SEEDLING').length;
-  const choppedRecordsCount = user.history.filter(h => h.verdict === 'CHOP_TREE').length;
-  const totalScansCount = user.history.length;
+  const history = Array.isArray(user.history) ? user.history : [];
+  const treeList = Array.isArray(trees) ? trees : [];
+
+  const cleanRecordsCount = history.filter(h => h.verdict === 'PLANT_SEEDLING').length;
+  const choppedRecordsCount = history.filter(h => h.verdict === 'CHOP_TREE').length;
+  const totalScansCount = history.length;
   const successRate = totalScansCount > 0 ? Math.round((cleanRecordsCount / totalScansCount) * 100) : 100;
 
-  const totalGrown = user.totalTreesGrownAllTime;
+  const totalGrown = user.totalTreesGrownAllTime || 0;
   const totalChopped = user.totalTreesChopped || 0;
-  const activeTreesInMeadow = trees.filter(t => t.stage !== 'chopped').length;
-  const matureTreesInMeadow = trees.filter(t => t.stage === 'mature_tree' || t.stage === 'golden_tree').length;
-  const growingTreesInMeadow = trees.filter(t => t.stage !== 'chopped' && t.growthPercent < 100).length;
-  const stumpsInMeadow = trees.filter(t => t.stage === 'chopped').length;
+  const activeTreesInMeadow = treeList.filter(t => t.stage !== 'chopped').length;
+  const matureTreesInMeadow = treeList.filter(t => t.stage === 'mature_tree' || t.stage === 'golden_tree').length;
+  const growingTreesInMeadow = treeList.filter(t => t.stage !== 'chopped' && t.growthPercent < 100).length;
+  const stumpsInMeadow = treeList.filter(t => t.stage === 'chopped').length;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
@@ -50,7 +54,7 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
             <UserAvatar avatar={user.avatarUrl} nickname={user.nickname} size="lg" />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xl font-sans font-extrabold text-[#2D3319]">{user.nickname}</h3>
+                <h3 className="text-xl font-sans font-extrabold text-[#2D3319]">{sanitizeNickname(user.nickname)}</h3>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-bold border border-[#CCD5AE]">
                   {currentMountain.name} 리그
                 </span>
@@ -186,16 +190,16 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
         <div className="mb-6">
           <h4 className="text-xs font-bold text-[#6B705C] uppercase tracking-wider mb-2.5 flex items-center justify-between">
             <span>최근 분리수거 인증 기록</span>
-            <span className="text-[#8C8F7A] font-normal">총 {user.history.length}건</span>
+            <span className="text-[#8C8F7A] font-normal">총 {history.length}건</span>
           </h4>
 
-          {user.history.length === 0 ? (
+          {history.length === 0 ? (
             <div className="text-center py-6 bg-white rounded-2xl border border-[#E8E4D9] text-[#8C8F7A] text-xs">
               아직 인증된 분리수거 기록이 없습니다.
             </div>
           ) : (
             <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-              {user.history.slice(0, 10).map((record) => (
+              {history.slice(0, 10).map((record) => (
                 <div
                   key={record.id}
                   className="p-3 rounded-2xl bg-white border border-[#E8E4D9] flex items-center justify-between text-xs shadow-xs"
@@ -240,21 +244,20 @@ export const ForestStatsModal: React.FC<ForestStatsModalProps> = ({
           <button
             onClick={() => {
               playSound('click');
-              if (window.confirm('정말 로그아웃 하시겠습니까?')) {
-                onLogout();
-              }
+              onClose();
+              onLogout();
             }}
-            className="flex items-center gap-1.5 text-xs text-[#8C8F7A] hover:text-rose-600 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-[#8C8F7A] hover:text-rose-600 font-semibold transition-colors px-3 py-2 rounded-xl hover:bg-rose-50"
           >
-            <LogOut className="w-4 h-4" />
-            <span>로그아웃</span>
+            <LogOut className="w-4 h-4 text-rose-500" />
+            <span className="text-rose-600 font-bold">로그아웃</span>
           </button>
 
           <button
             onClick={onClose}
             className="px-6 py-2.5 rounded-full bg-[#4A7856] hover:bg-[#3E6548] text-white font-bold text-xs shadow-xs transition-colors"
           >
-            확인
+            닫기
           </button>
         </div>
       </motion.div>

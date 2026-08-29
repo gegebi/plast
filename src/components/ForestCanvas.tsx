@@ -4,6 +4,7 @@ import { TreeItem, UserProfile } from '../types';
 import { Sparkles, PlusCircle, Sun, Wind, Clock, Zap, Leaf, Trash2 } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import confetti from 'canvas-confetti';
+import { sanitizeNickname } from '../utils/userUtils';
 
 interface ForestCanvasProps {
   trees: TreeItem[];
@@ -281,7 +282,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-sans font-extrabold text-white tracking-tight drop-shadow-sm">
-              {user.nickname}의 에코 포레스트 풀밭
+              {sanitizeNickname(user.nickname)}의 에코 포레스트 풀밭
             </h2>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E9EDC9] text-[#2D6A4F] font-extrabold border border-[#DDE5B6] shadow-xs">
               생태 풀밭 🌿

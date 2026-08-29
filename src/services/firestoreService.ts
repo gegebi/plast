@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserProfile, TreeItem, RecyclingRecord, LeaderboardUser, MountainId } from '../types';
+import { extractCleanNicknameAndAvatar } from '../utils/userUtils';
 
 export const firestoreService = {
   // --- User Profile ---
@@ -24,7 +25,14 @@ export const firestoreService = {
     try {
       const docSnap = await getDoc(doc(db, 'users', userId));
       if (docSnap.exists()) {
-        return docSnap.data() as UserProfile;
+        const raw = docSnap.data() as UserProfile;
+        const { nickname, avatarUrl } = extractCleanNicknameAndAvatar(raw.nickname, raw.avatarUrl);
+        return {
+          ...raw,
+          nickname,
+          avatarUrl,
+          history: Array.isArray(raw.history) ? raw.history : [],
+        };
       }
       return null;
     } catch (error) {
@@ -34,12 +42,13 @@ export const firestoreService = {
 
   async saveUserProfile(user: UserProfile): Promise<void> {
     const path = `users/${user.id}`;
+    const { nickname, avatarUrl } = extractCleanNicknameAndAvatar(user.nickname, user.avatarUrl);
     try {
       const sanitizedUser = {
         id: user.id,
-        nickname: user.nickname,
+        nickname,
         email: user.email,
-        avatarUrl: user.avatarUrl || '',
+        avatarUrl,
         currentLeagueId: user.currentLeagueId,
         leagueRank: user.leagueRank,
         treesInCurrentMountain: user.treesInCurrentMountain,
@@ -64,7 +73,19 @@ export const firestoreService = {
       doc(db, 'users', userId),
       (docSnap) => {
         if (docSnap.exists()) {
-          onUpdate(docSnap.data() as UserProfile);
+          const raw = docSnap.data() as UserProfile;
+          const { nickname, avatarUrl } = extractCleanNicknameAndAvatar(raw.nickname, raw.avatarUrl);
+          const cleanedUser: UserProfile = {
+            ...raw,
+            nickname,
+            avatarUrl,
+            history: Array.isArray(raw.history) ? raw.history : [],
+          };
+          // Auto-repair Firestore record if nickname had dirty URLs
+          if (raw.nickname !== nickname || raw.avatarUrl !== avatarUrl) {
+            setDoc(doc(db, 'users', userId), { nickname, avatarUrl }, { merge: true }).catch(() => {});
+          }
+          onUpdate(cleanedUser);
         } else {
           onUpdate(null);
         }
@@ -231,16 +252,13 @@ export const firestoreService = {
     const leagueId = typeof leagueOrUser === 'string' ? leagueOrUser : user.currentLeagueId;
     const path = `leaderboards/${leagueId}/entries/${user.id}`;
     
-    // Clean nickname
-    let cleanNick = (user.nickname || '').trim();
-    if (!cleanNick) cleanNick = '에코러너';
-    if (cleanNick.includes('@')) cleanNick = cleanNick.split('@')[0];
+    const { nickname, avatarUrl } = extractCleanNicknameAndAvatar(user.nickname, user.avatarUrl);
 
     try {
       await setDoc(doc(db, 'leaderboards', leagueId, 'entries', user.id), {
         userId: user.id,
-        nickname: cleanNick,
-        avatar: user.avatarUrl || '🌱',
+        nickname,
+        avatar: avatarUrl,
         leagueId: leagueId,
         leagueRank: user.leagueRank || 1,
         treesInMountain: Number(user.treesInCurrentMountain) || 0,
@@ -269,18 +287,20 @@ export const firestoreService = {
         const entries: LeaderboardUser[] = [];
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
-          let cleanNick = (data.nickname || '').trim();
-          if (!cleanNick || cleanNick.startsWith('user_') || cleanNick.startsWith('guest_')) {
-            cleanNick = '에코러너';
-          }
-          if (cleanNick.includes('@')) {
-            cleanNick = cleanNick.split('@')[0];
+          const { nickname, avatarUrl } = extractCleanNicknameAndAvatar(data.nickname, data.avatar);
+
+          // Auto-repair if document had dirty URL in nickname
+          if (data.nickname !== nickname || data.avatar !== avatarUrl) {
+            setDoc(doc(db, 'leaderboards', leagueId, 'entries', docSnap.id), {
+              nickname,
+              avatar: avatarUrl,
+            }, { merge: true }).catch(() => {});
           }
 
           entries.push({
             id: data.userId || docSnap.id,
-            nickname: cleanNick,
-            avatar: data.avatar || '🌱',
+            nickname,
+            avatar: avatarUrl,
             leagueId: data.leagueId || leagueId,
             leagueRank: Number(data.leagueRank) || 1,
             treesInMountain: Number(data.treesInMountain) || 0,

@@ -15,6 +15,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { playSound } from './utils/sound';
 import { useAuth } from './context/AuthContext';
 import { firestoreService } from './services/firestoreService';
+import { extractCleanNicknameAndAvatar } from './utils/userUtils';
 
 const STORAGE_KEY_USER = 'plast_eco_user_v1';
 const STORAGE_KEY_TREES = 'plast_eco_trees_v1';
@@ -28,7 +29,15 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY_USER);
       if (!saved) return null;
       const parsed = JSON.parse(saved);
-      return parsed && !parsed.isGuest ? parsed : null;
+      if (parsed && !parsed.isGuest) {
+        const { nickname, avatarUrl } = extractCleanNicknameAndAvatar(parsed.nickname, parsed.avatarUrl);
+        return {
+          ...parsed,
+          nickname,
+          avatarUrl,
+        };
+      }
+      return null;
     } catch {
       return null;
     }
@@ -95,11 +104,15 @@ export default function App() {
         }
       } else {
         // First-time Google user initialization -> Show Profile/Nickname setup modal
+        const { nickname: cleanName, avatarUrl: cleanAvatar } = extractCleanNicknameAndAvatar(
+          firebaseUser.displayName || '에코러너',
+          firebaseUser.photoURL || ''
+        );
         const newUser: UserProfile = {
           id: userId,
-          nickname: firebaseUser.displayName || '에코러너',
+          nickname: cleanName,
           email: firebaseUser.email || 'user@gmail.com',
-          avatarUrl: firebaseUser.photoURL || '',
+          avatarUrl: cleanAvatar,
           currentLeagueId: 'namsan',
           leagueRank: 1,
           treesInCurrentMountain: 0,
@@ -127,10 +140,19 @@ export default function App() {
       }
     });
 
+    // Subscribe to Firestore recycling records
+    const unsubRecords = firestoreService.subscribeRecords(userId, (remoteRecords) => {
+      if (!isSubscribed) return;
+      if (remoteRecords) {
+        setUser(prev => prev ? { ...prev, history: remoteRecords } : null);
+      }
+    });
+
     return () => {
       isSubscribed = false;
       unsubUser();
       unsubTrees();
+      unsubRecords();
     };
   }, [firebaseUser]);
 
@@ -152,7 +174,7 @@ export default function App() {
   }, [trees, user, firebaseUser]);
 
   // Active tree calculations
-  const activeTrees = trees.filter(t => t.stage !== 'chopped');
+  const activeTrees = (trees || []).filter(t => t.stage !== 'chopped');
   // Photosynthesis Synergy Multiplier (More trees = faster growth!)
   const growthMultiplier = 1.0 + Math.min(5.0, (activeTrees.length * 0.15));
 
@@ -379,7 +401,7 @@ export default function App() {
           treesInCurrentMountain: user.treesInCurrentMountain + 1,
           totalTreesGrownAllTime: user.totalTreesGrownAllTime + 1,
           carbonSavedGrams: user.carbonSavedGrams + result.carbonSavedGrams,
-          history: [newRecord, ...user.history]
+          history: [newRecord, ...(Array.isArray(user.history) ? user.history : [])]
         };
 
         setUser(updatedUser);
@@ -416,7 +438,7 @@ export default function App() {
           ...user,
           treesInCurrentMountain: Math.max(0, user.treesInCurrentMountain - 1),
           totalTreesChopped: user.totalTreesChopped + 1,
-          history: [newRecord, ...user.history]
+          history: [newRecord, ...(Array.isArray(user.history) ? user.history : [])]
         };
 
         setUser(updatedUser);
@@ -480,7 +502,13 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await logout();
+    playSound('click');
+    try {
+      await logout();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+    isInitialAuthRef.current = false;
     setUser(null);
     setTrees([]);
     setCurrentView('LANDING');
@@ -488,6 +516,9 @@ export default function App() {
     setIsLeaderboardOpen(false);
     setIsMountainsOpen(false);
     setIsProfileSetupOpen(false);
+    setIsScannerOpen(false);
+    setIsTutorialOpen(false);
+    setScanResult(null);
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TREES);
   };

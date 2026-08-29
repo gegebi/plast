@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { UserProfile } from '../types';
 import { Sparkles, Check, Mountain, User, ShieldCheck } from 'lucide-react';
 import { playSound } from '../utils/sound';
+import { extractCleanNicknameAndAvatar } from '../utils/userUtils';
 
 interface ProfileSetupModalProps {
   initialNickname: string;
@@ -28,16 +29,19 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
   userEmail,
   onSaveProfile,
 }) => {
-  const [nickname, setNickname] = useState(initialNickname || '에코러너');
+  const cleanedInit = extractCleanNicknameAndAvatar(initialNickname, initialAvatarUrl);
+  const [nickname, setNickname] = useState(cleanedInit.nickname || '에코러너');
+  const [effectiveAvatarUrl] = useState<string>(cleanedInit.avatarUrl || initialAvatarUrl);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(
-    initialAvatarUrl ? 'google' : 'sprout'
+    effectiveAvatarUrl && effectiveAvatarUrl.startsWith('http') ? 'google' : 'sprout'
   );
   const [customAvatarEmoji, setCustomAvatarEmoji] = useState<string>('🌱');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = nickname.trim();
+    const cleaned = extractCleanNicknameAndAvatar(nickname, effectiveAvatarUrl);
+    const trimmed = cleaned.nickname;
     if (!trimmed) {
       setErrorMsg('닉네임을 2자 이상 입력해주세요.');
       return;
@@ -49,8 +53,8 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
 
     playSound('fanfare');
     let finalAvatar = '';
-    if (selectedAvatar === 'google' && initialAvatarUrl) {
-      finalAvatar = initialAvatarUrl;
+    if (selectedAvatar === 'google' && effectiveAvatarUrl) {
+      finalAvatar = effectiveAvatarUrl;
     } else {
       const preset = AVATAR_PRESETS.find(p => p.id === selectedAvatar);
       finalAvatar = preset ? preset.emoji : customAvatarEmoji;

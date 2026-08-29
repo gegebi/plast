@@ -6,24 +6,12 @@ import { Trophy, Medal, Mountain, Heart, UserCheck, Flame, X, Sparkles, Radio, C
 import { playSound } from '../utils/sound';
 import { firestoreService } from '../services/firestoreService';
 import { UserAvatar } from './UserAvatar';
+import { extractCleanNicknameAndAvatar, sanitizeNickname } from '../utils/userUtils';
 
 interface LeaderboardModalProps {
   user: UserProfile;
   onClose: () => void;
 }
-
-// Clean and sanitize any raw strings into friendly eco nicknames
-const sanitizeNickname = (name?: string): string => {
-  if (!name || name.trim() === '') return '에코 러너';
-  let clean = name.trim();
-  if (clean.includes('@')) {
-    clean = clean.split('@')[0];
-  }
-  if (clean.startsWith('guest_') || clean.startsWith('user_')) {
-    return '초록이';
-  }
-  return clean;
-};
 
 // Baseline competition data for each mountain league
 const getMockLeagueUsers = (leagueId: MountainId): Omit<LeaderboardUser, 'leagueId' | 'leagueRank' | 'isCurrentUser'>[] => {
@@ -93,9 +81,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
   // 1. Add mock users as base placeholders
   mockList.forEach((m, idx) => {
+    const { nickname: cleanName, avatarUrl: cleanAvatar } = extractCleanNicknameAndAvatar(m.nickname, m.avatar);
     combinedMap.set(m.id, {
       ...m,
-      nickname: sanitizeNickname(m.nickname),
+      nickname: cleanName,
+      avatar: cleanAvatar,
       leagueId: selectedLeague,
       leagueRank: idx + 1,
       isCurrentUser: m.id === user.id
@@ -104,9 +94,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
   // 2. Overlay real live entries from Firestore (overriding or appending)
   liveEntries.forEach((entry) => {
+    const { nickname: cleanName, avatarUrl: cleanAvatar } = extractCleanNicknameAndAvatar(entry.nickname, entry.avatar);
     combinedMap.set(entry.id, {
       ...entry,
-      nickname: sanitizeNickname(entry.nickname),
+      nickname: cleanName,
+      avatar: cleanAvatar,
       leagueId: selectedLeague,
       isCurrentUser: entry.id === user.id
     });
@@ -115,10 +107,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   // 3. Ensure current user is present if viewing their current league
   if (user.currentLeagueId === selectedLeague) {
     const existing = combinedMap.get(user.id);
+    const { nickname: cleanName, avatarUrl: cleanAvatar } = extractCleanNicknameAndAvatar(user.nickname, user.avatarUrl);
     combinedMap.set(user.id, {
       id: user.id,
-      nickname: sanitizeNickname(user.nickname),
-      avatar: user.avatarUrl || '🌱',
+      nickname: cleanName,
+      avatar: cleanAvatar,
       leagueId: selectedLeague,
       leagueRank: existing?.leagueRank || 1,
       treesInMountain: user.treesInCurrentMountain,

@@ -3,6 +3,7 @@ import { Camera, Mountain, Trophy, Sparkles, User, TreePine, Flame, Leaf } from 
 import { UserProfile } from '../types';
 import { MOUNTAIN_LEAGUES } from '../data/mountains';
 import { playSound } from '../utils/sound';
+import { sanitizeNickname } from '../utils/userUtils';
 
 interface NavbarProps {
   user: UserProfile;
@@ -65,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <div className="w-2.5 h-2.5 rounded-full bg-[#FFD966] shadow-[0_0_8px_rgba(255,217,102,0.8)]" />
             <span className="text-xs font-semibold text-[#6B705C]">
-              {user.nickname}:
+              {sanitizeNickname(user.nickname)}:
             </span>
             <span className="text-xs font-bold text-[#2D3319] flex items-center gap-1">
               <Mountain className="w-3.5 h-3.5 text-[#7A9D54]" />
