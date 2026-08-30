@@ -55,7 +55,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
   const growingTreesCount = trees.filter(t => t.stage !== 'chopped' && (t.growthPercent || 0) < 100 && t.stage !== 'mature_tree' && t.stage !== 'golden_tree').length;
 
   // Base growth time: 5 hours (in seconds)
-  const BASE_GROWTH_SECONDS = 5 * 3600;
+  const BASE_GROWTH_SECONDS = 12 * 3600;
 
   // Calculate estimated remaining time in seconds based on multiplier and current percent
   const getRemainingTimeText = (growthPercent: number) => {
@@ -339,7 +339,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
           <span className="text-white/40">|</span>
           <div className="flex items-center gap-1 font-semibold text-white/90">
             <Clock className="w-3.5 h-3.5 text-[#86EFAC]" />
-            <span>성장 기준 5시간</span>
+            <span>성장 기준 12시간</span>
           </div>
           <span className="text-white/40">|</span>
           <span className="font-extrabold text-[#FDE047]">
@@ -562,7 +562,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
         <div className="flex items-center gap-1.5">
           <span className="text-sm">🌱</span>
           <span>
-            <strong>5시간 자연 성장 법칙</strong>: 묘목은 5시간에 걸쳐 자라나며, 풀밭의 나무가 많을수록 광합성 시너지로 시간이 대폭 단축됩니다!
+            <strong>12시간 자연 성장 법칙</strong>: 묘목은 12시간에 걸쳐 자라나며, 풀밭의 나무가 많을수록 광합성 시너지로 시간이 대폭 단축됩니다!
           </span>
         </div>
         <span className="text-[11px] text-[#FDE047] font-bold">
@@ -727,7 +727,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
                       />
                     </div>
                     <p className="text-[11px] text-[#8C8F7A] mt-1.5 text-left">
-                      💡 기본 5시간 소요되며, 현재 보유한 나무들의 <strong>광합성 시너지(x{growthMultiplier.toFixed(1)})</strong>로 시간이 단축되어 성장합니다.
+                      💡 기본 12시간 소요되며, 현재 보유한 나무들의 <strong>광합성 시너지(x{growthMultiplier.toFixed(1)})</strong>로 시간이 단축되어 성장합니다.
                     </p>
                   </div>
                 )}

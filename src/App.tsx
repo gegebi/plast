@@ -191,14 +191,14 @@ export default function App() {
 
   // Active tree calculations
   const activeTrees = (trees || []).filter(t => t.stage !== 'chopped');
-  // Photosynthesis Synergy Multiplier (More trees = faster growth!)
-  const growthMultiplier = 1.0 + Math.min(5.0, (activeTrees.length * 0.15));
+  // Photosynthesis Synergy Multiplier (Balanced synergy scaling, applies from the 2nd tree)
+  const growthMultiplier = 1.0 + Math.min(3.0, (Math.max(0, activeTrees.length - 1) * 0.08));
 
-  // Passive Natural Growth Loop (accelerated by photosynthesis synergy)
+  // Passive Natural Growth Loop (Balanced 12-hour natural lifecycle)
   useEffect(() => {
     if (!user || trees.length === 0) return;
 
-    // Tick every 3 seconds
+    // Tick every 5 seconds
     const interval = setInterval(() => {
       setTrees(prevTrees => {
         let hasChanges = false;
@@ -208,8 +208,10 @@ export default function App() {
           }
 
           hasChanges = true;
-          const increment = 0.25 * growthMultiplier;
-          const newPercent = Math.min(100, tree.growthPercent + increment);
+          // 12 hours = 43,200 seconds. In 5-second interval: 5 / 43,200 * 100 = 0.01157% per tick
+          const baseIncrement = (5 / 43200) * 100;
+          const increment = baseIncrement * growthMultiplier;
+          const newPercent = Math.min(100, Number((tree.growthPercent + increment).toFixed(3)));
 
           let newStage = tree.stage;
           if (newPercent >= 100) {
@@ -224,10 +226,10 @@ export default function App() {
             stage: newStage
           };
 
-          // If connected to Firebase and not a guest, update tree in Firestore
-          if (user.id && firebaseUser && !user.isGuest) {
+          // If connected to Firebase and not a guest, update tree in Firestore periodically
+          if (user.id && firebaseUser && !user.isGuest && (Math.floor(newPercent) > Math.floor(tree.growthPercent) || newPercent >= 100)) {
             firestoreService.updateTree(user.id, tree.id, {
-              growthPercent: newPercent,
+              growthPercent: Math.round(newPercent),
               stage: newStage
             });
           }
@@ -237,7 +239,7 @@ export default function App() {
 
         return hasChanges ? updated : prevTrees;
       });
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [user, trees.length, growthMultiplier, firebaseUser]);
@@ -253,7 +255,7 @@ export default function App() {
       type: 'pine',
       name: '게스트 환영 묘목',
       stage: 'seedling',
-      growthPercent: 20,
+      growthPercent: 0,
       plantedAt: Date.now(),
       gridIndex: 0,
       itemNameAtPlanting: '게스트 체험 시작 묘목'
@@ -329,7 +331,7 @@ export default function App() {
       type: 'pine',
       name: '첫 희망의 새싹 묘목',
       stage: 'seedling',
-      growthPercent: 20,
+      growthPercent: 0,
       plantedAt: Date.now(),
       gridIndex: 0,
       itemNameAtPlanting: '신규 가입 환영 묘목'
@@ -411,7 +413,7 @@ export default function App() {
         type: randomType,
         name: randomType === 'golden_baobab' ? '황금 에코 거목' : `${resolvedItemName} 묘목`,
         stage: 'seedling',
-        growthPercent: result.status === 'PERFECT' ? 35 : 10,
+        growthPercent: result.status === 'PERFECT' ? 15 : 0,
         plantedAt: Date.now(),
         gridIndex: trees.length,
         itemNameAtPlanting: `${resolvedItemName} (${result.cleanlinessScore}점 세척)`

@@ -424,7 +424,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </ul>
             </div>
             <div className="mt-6 pt-4 border-t border-[#F0EDE5] flex items-center justify-between text-[11px] text-[#8C8F7A]">
-              <span>성장 주기: 5시간 ➡️ 시너지 단축</span>
+              <span>성장 주기: 12시간 ➡️ 시너지 단축</span>
               <span className="font-bold text-[#7A9D54]">숲 시뮬레이션</span>
             </div>
           </motion.div>
