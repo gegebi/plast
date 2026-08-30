@@ -124,10 +124,12 @@ export const firestoreService = {
     try {
       const updateData: Record<string, any> = {};
       if (typeof treeOrId === 'object') {
+        if (treeOrId.name !== undefined) updateData.name = treeOrId.name;
         updateData.stage = treeOrId.stage;
         updateData.growthPercent = Math.round(treeOrId.growthPercent);
         if (treeOrId.choppedReason !== undefined) updateData.choppedReason = treeOrId.choppedReason;
       } else if (partial) {
+        if (partial.name !== undefined) updateData.name = partial.name;
         if (partial.stage !== undefined) updateData.stage = partial.stage;
         if (partial.growthPercent !== undefined) updateData.growthPercent = Math.round(partial.growthPercent);
         if (partial.choppedReason !== undefined) updateData.choppedReason = partial.choppedReason;

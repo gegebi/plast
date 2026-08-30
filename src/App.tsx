@@ -137,6 +137,22 @@ export default function App() {
       if (!isSubscribed) return;
       if (remoteTrees) {
         setTrees(remoteTrees);
+        // Ensure user profile's treesInCurrentMountain accurately reflects real tree count
+        setUser(prev => {
+          if (!prev) return null;
+          if (prev.treesInCurrentMountain !== remoteTrees.length) {
+            const updated = {
+              ...prev,
+              treesInCurrentMountain: remoteTrees.length
+            };
+            if (!prev.isGuest) {
+              firestoreService.saveUserProfile(updated);
+              firestoreService.updateLeaderboard(updated.currentLeagueId, updated);
+            }
+            return updated;
+          }
+          return prev;
+        });
       }
     });
 
@@ -490,16 +506,54 @@ export default function App() {
 
   // Delete individual tree
   const handleDeleteTree = (treeId: string) => {
-    setTrees(prev => prev.filter(t => t.id !== treeId));
+    setTrees(prev => {
+      const nextTrees = prev.filter(t => t.id !== treeId);
+      if (user) {
+        const updatedUser = {
+          ...user,
+          treesInCurrentMountain: nextTrees.length
+        };
+        setUser(updatedUser);
+        if (firebaseUser && !user.isGuest) {
+          firestoreService.saveUserProfile(updatedUser);
+          firestoreService.updateLeaderboard(user.currentLeagueId, updatedUser);
+        }
+      }
+      return nextTrees;
+    });
     if (user && firebaseUser && !user.isGuest) {
       firestoreService.deleteTree(user.id, treeId);
+    }
+  };
+
+  // Rename individual tree
+  const handleRenameTree = (treeId: string, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    setTrees(prev => prev.map(t => t.id === treeId ? { ...t, name: trimmed } : t));
+    if (user && firebaseUser && !user.isGuest) {
+      firestoreService.updateTree(user.id, treeId, { name: trimmed });
     }
   };
 
   // Clean up all chopped tree stumps at once from forest meadow
   const handleClearChoppedTrees = () => {
     const choppedIds = trees.filter(t => t.stage === 'chopped').map(t => t.id);
-    setTrees(prev => prev.filter(t => t.stage !== 'chopped'));
+    setTrees(prev => {
+      const nextTrees = prev.filter(t => t.stage !== 'chopped');
+      if (user) {
+        const updatedUser = {
+          ...user,
+          treesInCurrentMountain: nextTrees.length
+        };
+        setUser(updatedUser);
+        if (firebaseUser && !user.isGuest) {
+          firestoreService.saveUserProfile(updatedUser);
+          firestoreService.updateLeaderboard(user.currentLeagueId, updatedUser);
+        }
+      }
+      return nextTrees;
+    });
     if (user && firebaseUser && !user.isGuest && choppedIds.length > 0) {
       firestoreService.deleteMultipleTrees(user.id, choppedIds);
     }
@@ -582,6 +636,7 @@ export default function App() {
           growthMultiplier={growthMultiplier}
           onOpenScanner={() => setIsScannerOpen(true)}
           onDeleteTree={handleDeleteTree}
+          onRenameTree={handleRenameTree}
           onClearChoppedTrees={handleClearChoppedTrees}
         />
 

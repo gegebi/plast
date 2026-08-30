@@ -1,9 +1,10 @@
-import React from 'react';
-import { Camera, Mountain, Trophy, Sparkles, User, TreePine, Flame, Leaf } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, Mountain, Trophy, Sparkles, User, TreePine, Flame, Leaf, UserX } from 'lucide-react';
 import { UserProfile } from '../types';
 import { MOUNTAIN_LEAGUES } from '../data/mountains';
 import { playSound } from '../utils/sound';
 import { sanitizeNickname } from '../utils/userUtils';
+import { firestoreService } from '../services/firestoreService';
 
 interface NavbarProps {
   user: UserProfile;
@@ -29,6 +30,32 @@ export const Navbar: React.FC<NavbarProps> = ({
   const currentMountain = MOUNTAIN_LEAGUES[user.currentLeagueId] || MOUNTAIN_LEAGUES.namsan;
   const progressPercent = Math.min(100, Math.round((user.treesInCurrentMountain / currentMountain.requiredTrees) * 100));
 
+  const [liveRank, setLiveRank] = useState<number | null>(null);
+
+  // Subscribe to real-time Firestore leaderboard for accurate ranking when logged in
+  useEffect(() => {
+    if (user.isGuest || !user.id) {
+      setLiveRank(null);
+      return;
+    }
+
+    const unsub = firestoreService.subscribeLeaderboard(user.currentLeagueId, (entries) => {
+      const myEntry = entries.find(e => e.id === user.id);
+      if (myEntry) {
+        setLiveRank(myEntry.leagueRank);
+      } else {
+        // Compute rank among existing entries
+        const myTrees = user.treesInCurrentMountain || 0;
+        const higherRankCount = entries.filter(e => e.treesInMountain > myTrees).length;
+        setLiveRank(higherRankCount + 1);
+      }
+    });
+
+    return () => unsub();
+  }, [user.isGuest, user.id, user.currentLeagueId, user.treesInCurrentMountain]);
+
+  const displayRank = liveRank ?? user.leagueRank ?? 1;
+
   return (
     <header className="sticky top-0 z-40 w-full bg-[#F9F7F2]/90 backdrop-blur-md border-b border-[#E8E4D9] px-4 py-3 sm:px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -51,19 +78,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* User Mountain Rank Badge (e.g., "사용자닉네임: 남산 1위") */}
+          {/* User Mountain Rank / Guest Badge */}
           <div 
             onClick={() => { playSound('click'); onOpenLeaderboard(); }}
+            title={user.isGuest ? '게스트 모드 (클릭 시 랭킹 확인)' : `${currentMountain.name} 리그 실시간 ${displayRank}위`}
             className="hidden md:flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-xs border border-[#E8E4D9] hover:border-[#7A9D54] cursor-pointer transition-all hover:bg-white"
           >
-            <div className="w-2.5 h-2.5 rounded-full bg-[#FFD966] shadow-[0_0_8px_rgba(255,217,102,0.8)]" />
+            <div className={`w-2.5 h-2.5 rounded-full ${
+              user.isGuest 
+                ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' 
+                : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'
+            }`} />
             <span className="text-xs font-semibold text-[#6B705C]">
               {sanitizeNickname(user.nickname)}:
             </span>
-            <span className="text-xs font-bold text-[#2D3319] flex items-center gap-1">
-              <Mountain className="w-3.5 h-3.5 text-[#7A9D54]" />
-              {currentMountain.name} {user.leagueRank}위
-            </span>
+            {user.isGuest ? (
+              <span className="text-xs font-bold text-amber-800 flex items-center gap-1">
+                게스트 모드
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-[#2D3319] flex items-center gap-1">
+                <Mountain className="w-3.5 h-3.5 text-[#7A9D54]" />
+                {currentMountain.name} {displayRank}위
+              </span>
+            )}
           </div>
         </div>
 

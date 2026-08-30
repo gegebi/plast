@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TreeItem, UserProfile } from '../types';
-import { Sparkles, PlusCircle, Sun, Wind, Clock, Zap, Leaf, Trash2 } from 'lucide-react';
+import { Sparkles, PlusCircle, Sun, Wind, Clock, Zap, Leaf, Trash2, Edit2, Check, X, Pencil } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import confetti from 'canvas-confetti';
 import { sanitizeNickname } from '../utils/userUtils';
@@ -12,6 +12,7 @@ interface ForestCanvasProps {
   growthMultiplier: number;
   onOpenScanner: () => void;
   onDeleteTree: (treeId: string) => void;
+  onRenameTree?: (treeId: string, newName: string) => void;
   onClearChoppedTrees?: () => void;
 }
 
@@ -37,17 +38,21 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
   growthMultiplier,
   onOpenScanner,
   onDeleteTree,
+  onRenameTree,
   onClearChoppedTrees
 }) => {
   const [selectedTree, setSelectedTree] = useState<TreeItem | null>(null);
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [editNameInput, setEditNameInput] = useState<string>('');
   const [bouncingTreeId, setBouncingTreeId] = useState<string | null>(null);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [floatingToasts, setFloatingToasts] = useState<FloatingToast[]>([]);
 
-  const activeTreesCount = trees.filter(t => t.stage !== 'chopped').length;
-  const matureTreesCount = trees.filter(t => t.stage === 'mature_tree' || t.stage === 'golden_tree').length;
-  const growingTreesCount = trees.filter(t => t.stage !== 'chopped' && t.growthPercent < 100).length;
+  const totalTreesCount = trees.length;
   const choppedTreesCount = trees.filter(t => t.stage === 'chopped').length;
+  const activeTreesCount = trees.filter(t => t.stage !== 'chopped').length;
+  const matureTreesCount = trees.filter(t => t.stage !== 'chopped' && (t.growthPercent >= 100 || t.stage === 'mature_tree' || t.stage === 'golden_tree')).length;
+  const growingTreesCount = trees.filter(t => t.stage !== 'chopped' && (t.growthPercent || 0) < 100 && t.stage !== 'mature_tree' && t.stage !== 'golden_tree').length;
 
   // Base growth time: 5 hours (in seconds)
   const BASE_GROWTH_SECONDS = 5 * 3600;
@@ -69,6 +74,36 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
       return `약 ${minutes}분 남음`;
     }
     return '곧 완성됩니다!';
+  };
+
+  // Save renamed tree name
+  const handleSaveTreeName = () => {
+    if (!selectedTree) return;
+    const trimmed = editNameInput.trim();
+    if (!trimmed) return;
+
+    if (onRenameTree) {
+      onRenameTree(selectedTree.id, trimmed);
+    }
+
+    setSelectedTree({
+      ...selectedTree,
+      name: trimmed
+    });
+    setIsEditingName(false);
+    playSound('level_up');
+
+    // Display floating feedback toast
+    const newToast: FloatingToast = {
+      id: 'rename-' + Date.now(),
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2 - 80,
+      text: `✏️ "${trimmed}"(으)로 이름 변경 완료!`
+    };
+    setFloatingToasts(prev => [...prev, newToast]);
+    setTimeout(() => {
+      setFloatingToasts(prev => prev.filter(t => t.id !== newToast.id));
+    }, 1500);
   };
 
   // Trigger reactive burst animation when clicking a tree
@@ -136,6 +171,8 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
 
     // Select tree to view details
     setSelectedTree(tree);
+    setIsEditingName(false);
+    setEditNameInput(tree.name);
   };
 
   // Render SVG tree graphic based on stage and type
@@ -306,7 +343,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
           </div>
           <span className="text-white/40">|</span>
           <span className="font-extrabold text-[#FDE047]">
-            총 {activeTreesCount}그루
+            총 {totalTreesCount}그루 {choppedTreesCount > 0 ? `(생존 ${activeTreesCount}그루)` : ''}
           </span>
           {choppedTreesCount > 0 && (
             <div className="flex items-center gap-1.5 ml-1">
@@ -425,10 +462,11 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
                     {/* Floating Wooden/Eco Name & Status Pill Tag */}
                     <div className="relative z-20 mt-1.5 flex flex-col items-center max-w-[130px] w-full px-1">
                       {/* Tree Name */}
-                      <div className="px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-center shadow-md max-w-full">
+                      <div className="px-2.5 py-0.5 rounded-full bg-black/40 group-hover:bg-black/60 backdrop-blur-md border border-white/20 group-hover:border-white/40 text-center shadow-md max-w-full flex items-center justify-center gap-1 transition-all">
                         <p className="text-[11px] sm:text-[12px] font-extrabold text-white truncate drop-shadow-xs font-sans">
                           {tree.name}
                         </p>
+                        <Pencil className="w-2.5 h-2.5 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </div>
 
                       {tree.stage !== 'chopped' ? (
@@ -528,7 +566,7 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
           </span>
         </div>
         <span className="text-[11px] text-[#FDE047] font-bold">
-          성장 중인 묘목: {growingTreesCount}그루 / 완전 성장: {matureTreesCount}그루
+          총 {totalTreesCount}그루 (성장 중: {growingTreesCount}그루 · 완전 성장: {matureTreesCount}그루{choppedTreesCount > 0 ? ` · 벌목: ${choppedTreesCount}그루` : ''})
         </span>
       </div>
 
@@ -582,9 +620,86 @@ export const ForestCanvas: React.FC<ForestCanvasProps> = ({
                 <div className="w-24 h-24 mx-auto mb-2 flex items-center justify-center">
                   {renderTreeGraphic(selectedTree)}
                 </div>
-                <h4 className="text-2xl font-extrabold text-[#2D3319] mb-1 font-sans">
-                  {selectedTree.name}
-                </h4>
+                {/* Tree Name Display or Inline Rename Form */}
+                {!isEditingName ? (
+                  <div className="flex items-center justify-center gap-2 mb-1.5 flex-wrap">
+                    <h4 className="text-2xl font-extrabold text-[#2D3319] font-sans tracking-tight">
+                      {selectedTree.name}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playSound('click');
+                        setIsEditingName(true);
+                        setEditNameInput(selectedTree.name);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E8E4D9]/80 hover:bg-[#DCD8CC] text-[#4A5D23] font-bold text-xs transition-all active:scale-95 shadow-xs cursor-pointer"
+                      title="나무 이름 변경하기"
+                    >
+                      <Pencil className="w-3 h-3 text-[#4A7856]" />
+                      <span>이름 변경</span>
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSaveTreeName();
+                    }}
+                    className="flex flex-col items-center gap-2 mb-3 bg-[#EFECE4] p-3 rounded-2xl border border-[#DCD8CC] shadow-inner"
+                  >
+                    <div className="flex items-center justify-between w-full text-[11px] font-bold text-[#4A5D23] px-1">
+                      <span className="flex items-center gap-1">
+                        <Pencil className="w-3 h-3 text-[#4A7856]" />
+                        <span>나무 애칭(이름) 설정</span>
+                      </span>
+                      <span className="text-[#8C8F7A] text-[10px]">{editNameInput.length}/15자</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 w-full">
+                      <input
+                        type="text"
+                        value={editNameInput}
+                        onChange={(e) => setEditNameInput(e.target.value.slice(0, 15))}
+                        placeholder="새로운 나무 이름 입력"
+                        maxLength={15}
+                        autoFocus
+                        className="flex-1 px-3 py-2 rounded-xl bg-white border-2 border-[#7A9D54] text-[#2D3319] text-sm font-bold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7A9D54]/30"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!editNameInput.trim()}
+                        className="px-3 py-2 rounded-xl bg-[#4A7856] hover:bg-[#3E6548] disabled:opacity-50 text-white text-xs font-extrabold shadow-sm transition-all flex items-center gap-1 active:scale-95"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>저장</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playSound('click');
+                          setIsEditingName(false);
+                        }}
+                        className="px-2.5 py-2 rounded-xl bg-white hover:bg-gray-100 text-[#6B705C] text-xs font-bold border border-[#DCD8CC] transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {/* Quick Preset Nicknames */}
+                    <div className="flex flex-wrap gap-1 justify-center pt-1 w-full">
+                      <span className="text-[10px] text-[#8C8F7A] self-center mr-1">추천:</span>
+                      {['초록이', '맑음나무', '행복소나무', '엽떡극복이', '에코가디언', '힐링묘목'].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setEditNameInput(preset)}
+                          className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-[#DCD8CC] text-[#556B2F] hover:bg-[#DDE5B6] hover:border-[#7A9D54] font-medium transition-colors cursor-pointer"
+                        >
+                          +{preset}
+                        </button>
+                      ))}
+                    </div>
+                  </form>
+                )}
                 <span className={`inline-block px-3.5 py-1 rounded-full text-xs font-bold mb-3 ${
                   selectedTree.stage === 'chopped' 
                     ? 'bg-rose-100 text-rose-700 border border-rose-200' 
