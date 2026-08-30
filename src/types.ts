@@ -44,11 +44,12 @@ export interface RecyclingRecord {
   category: ItemCategory;
   categoryName: string;
   cleanlinessScore: number;
+  contaminationPercent: number; // 0..100 (Total contamination rate)
   status: 'PERFECT' | 'CLEAN' | 'SLIGHT_STAIN' | 'CONTAMINATED';
   verdict: 'PLANT_SEEDLING' | 'CHOP_TREE';
-  redStainScore: number; // 0..100 (high = bad oil/sauce)
-  darkGrimeScore: number; // 0..100
-  cleanRatio: number; // 0..100
+  redStainScore?: number;
+  darkGrimeScore?: number;
+  cleanRatio?: number;
   imageUri: string;
   notes: string;
   carbonSavedGrams: number;
@@ -75,10 +76,11 @@ export interface UserProfile {
 
 export interface AnalysisOutput {
   cleanlinessScore: number; // 0 to 100
+  contaminationPercent: number; // 0 to 100 (총 오염도, e.g. 12%)
   status: 'PERFECT' | 'CLEAN' | 'SLIGHT_STAIN' | 'CONTAMINATED';
   verdict: 'PLANT_SEEDLING' | 'CHOP_TREE';
-  redStainPercent: number;
-  darkGrimePercent: number;
+  redStainPercent?: number;
+  darkGrimePercent?: number;
   surfaceUniformity: number;
   feedbackTitle: string;
   feedbackMessage: string;

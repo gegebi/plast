@@ -71,32 +71,41 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
           </p>
         </div>
 
-        {/* Cleanliness Score Gauge */}
+        {/* Total Contamination Rate & Cleanliness Gauge */}
         <div className="bg-white border border-[#E8E4D9] rounded-2xl p-4 mb-5 shadow-xs">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold text-[#6B705C]">
-                {result.isAiAnalyzed ? 'Gemini AI 정밀 청결도' : '비전 알고리즘 청결도'}
+                {result.isAiAnalyzed ? 'AI 정밀 측정 총 오염도' : '비전 센서 총 오염도'}
               </span>
               {result.isAiAnalyzed && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-emerald-600" />
-                  배경 분리 완료
+                  배경 분리 분석
                 </span>
               )}
             </div>
-            <span className={`text-xl font-extrabold ${
-              result.cleanlinessScore >= 80 ? 'text-[#4A7856]' : result.cleanlinessScore >= 50 ? 'text-[#E2B842]' : 'text-rose-600'
-            }`}>
-              {result.cleanlinessScore}점 / 100점
-            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xs font-bold text-[#8C8F7A]">총 오염도</span>
+              <span className={`text-xl font-extrabold font-mono ${
+                (result.contaminationPercent ?? (100 - result.cleanlinessScore)) <= 15
+                  ? 'text-[#4A7856]'
+                  : (result.contaminationPercent ?? (100 - result.cleanlinessScore)) <= 30
+                  ? 'text-[#608038]'
+                  : (result.contaminationPercent ?? (100 - result.cleanlinessScore)) <= 50
+                  ? 'text-[#E2B842]'
+                  : 'text-rose-600'
+              }`}>
+                {result.contaminationPercent ?? (100 - result.cleanlinessScore)}%
+              </span>
+            </div>
           </div>
 
           {result.detectedItem && (
             <div className="mb-3 px-3.5 py-2 rounded-xl bg-[#E9EDC9]/80 border border-[#DDE5B6] text-[#2D3319] text-xs font-medium flex items-center justify-between shadow-xs">
               <div className="flex items-center gap-1.5">
                 <span className="text-base">✨</span>
-                <span className="text-[#4A5D23] font-semibold">AI 자동 품목 분류:</span>
+                <span className="text-[#4A5D23] font-semibold">AI 자동 품목 식별:</span>
               </div>
               <span className="font-extrabold text-[#2D3319] bg-white px-2.5 py-0.5 rounded-lg border border-[#CCD5AE]">
                 {result.detectedItem}
@@ -104,18 +113,22 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
             </div>
           )}
 
-          {/* Progress Bar */}
+          {/* Progress Bar showing Contamination vs Cleanliness */}
           <div className="w-full h-3 bg-[#F0EDE5] rounded-full overflow-hidden p-0.5 border border-[#E8E4D9]">
             <div
               className={`h-full rounded-full transition-all duration-700 ${
-                result.cleanlinessScore >= 80 
+                (result.contaminationPercent ?? (100 - result.cleanlinessScore)) <= 30
                   ? 'bg-[#7A9D54]' 
-                  : result.cleanlinessScore >= 50 
+                  : (result.contaminationPercent ?? (100 - result.cleanlinessScore)) <= 50 
                   ? 'bg-[#E2B842]' 
                   : 'bg-rose-500'
               }`}
-              style={{ width: `${result.cleanlinessScore}%` }}
+              style={{ width: `${Math.max(4, 100 - (result.contaminationPercent ?? (100 - result.cleanlinessScore)))}%` }}
             />
+          </div>
+          <div className="flex justify-between items-center mt-1.5 text-[10px] text-[#8C8F7A]">
+            <span>기준: 30% 이하 시 통과 (새 묘목 획득)</span>
+            <span className="font-bold text-[#4A5D23]">청결 점수 {result.cleanlinessScore}점</span>
           </div>
         </div>
 
@@ -124,7 +137,7 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-[#6B705C] flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-[#7A9D54]" />
-              <span>오염도 픽셀 분석 히트맵</span>
+              <span>오염도 분석 뷰</span>
             </span>
             <div className="flex gap-1 bg-[#F0EDE5] p-1 rounded-full text-[11px]">
               <button
@@ -168,15 +181,11 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
               <div className="absolute bottom-2 left-2 right-2 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 flex items-center justify-around text-[10px] text-white">
                 <div className="flex items-center gap-1">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
-                  <span className="text-red-200">고추기름/양념</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block" />
-                  <span className="text-purple-200">어두운 이물질</span>
+                  <span className="text-red-200">잔여 오염/얼룩 영역</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#7A9D54] inline-block" />
-                  <span className="text-[#DDE5B6]">깨끗한 플라스틱</span>
+                  <span className="text-[#DDE5B6]">세척 완료 (깨끗한 영역)</span>
                 </div>
               </div>
             )}
@@ -186,21 +195,21 @@ export const ScanResultModal: React.FC<ScanResultModalProps> = ({
         {/* Detailed Sensor Breakdown Metrics */}
         <div className="grid grid-cols-3 gap-2.5 mb-6 text-center text-xs">
           <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[#8C8F7A] block text-[10px] font-medium">고추기름/양념</span>
-            <span className={`font-mono font-bold text-sm ${result.redStainPercent > 10 ? 'text-rose-600' : 'text-[#4A7856]'}`}>
-              {result.redStainPercent}%
+            <span className="text-[#8C8F7A] block text-[10px] font-medium">총 오염도</span>
+            <span className={`font-mono font-bold text-sm ${(result.contaminationPercent ?? (100 - result.cleanlinessScore)) > 30 ? 'text-rose-600' : 'text-[#4A7856]'}`}>
+              {result.contaminationPercent ?? (100 - result.cleanlinessScore)}%
             </span>
           </div>
           <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[#8C8F7A] block text-[10px] font-medium">이물질 잔여도</span>
-            <span className={`font-mono font-bold text-sm ${result.darkGrimePercent > 15 ? 'text-[#E2B842]' : 'text-[#4A7856]'}`}>
-              {result.darkGrimePercent}%
+            <span className="text-[#8C8F7A] block text-[10px] font-medium">청결 적합도</span>
+            <span className={`font-mono font-bold text-sm ${result.cleanlinessScore >= 70 ? 'text-[#4A7856]' : 'text-rose-600'}`}>
+              {result.cleanlinessScore}점
             </span>
           </div>
           <div className="bg-white border border-[#E8E4D9] p-3 rounded-2xl shadow-xs">
-            <span className="text-[#8C8F7A] block text-[10px] font-medium">표면 청결 균일도</span>
-            <span className="font-mono font-bold text-sm text-[#4A7856]">
-              {result.surfaceUniformity}%
+            <span className="text-[#8C8F7A] block text-[10px] font-medium">분리배출 판정</span>
+            <span className={`font-bold text-xs ${isSuccess ? 'text-[#4A7856]' : 'text-rose-600'}`}>
+              {isSuccess ? '합격 (나무 심기🌱)' : '불합격 (벌목🪓)'}
             </span>
           </div>
         </div>

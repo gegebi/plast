@@ -56,18 +56,24 @@ export async function analyzeRecyclingImageWithAI(
       if (json.success && json.data) {
         const aiData = json.data;
 
+        const aiCleanliness = Number(aiData.cleanlinessScore) ?? 75;
+        const aiContamination = typeof aiData.contaminationPercent === 'number' 
+          ? aiData.contaminationPercent 
+          : Math.max(0, Math.min(100, 100 - aiCleanliness));
+
         // Also generate lightweight visual highlight
-        const heatmapDataUrl = generateHeatmapOverlay(canvas, aiData.cleanlinessScore >= 70);
+        const heatmapDataUrl = generateHeatmapOverlay(canvas, aiCleanliness >= 70);
 
         return {
-          cleanlinessScore: Number(aiData.cleanlinessScore) || 75,
-          status: aiData.status || (aiData.cleanlinessScore >= 70 ? 'CLEAN' : 'CONTAMINATED'),
-          verdict: aiData.verdict || (aiData.cleanlinessScore >= 70 ? 'PLANT_SEEDLING' : 'CHOP_TREE'),
-          redStainPercent: Number(aiData.redStainPercent) || 0,
-          darkGrimePercent: Number(aiData.darkGrimePercent) || 0,
-          surfaceUniformity: Math.max(0, 100 - (Number(aiData.redStainPercent) || 0) - (Number(aiData.darkGrimePercent) || 0)),
-          feedbackTitle: aiData.feedbackTitle || '🤖 AI 정밀 판별 완료',
-          feedbackMessage: aiData.feedbackMessage || 'AI가 배경을 분리하고 용기 오염도를 정밀 판정했습니다.',
+          cleanlinessScore: aiCleanliness,
+          contaminationPercent: aiContamination,
+          status: aiData.status || (aiCleanliness >= 70 ? 'CLEAN' : 'CONTAMINATED'),
+          verdict: aiData.verdict || (aiCleanliness >= 70 ? 'PLANT_SEEDLING' : 'CHOP_TREE'),
+          redStainPercent: aiContamination,
+          darkGrimePercent: 0,
+          surfaceUniformity: Math.max(0, 100 - aiContamination),
+          feedbackTitle: aiData.feedbackTitle || (aiContamination <= 30 ? `🌱 총 오염도 ${aiContamination}% (양호)` : `⚠️ 총 오염도 ${aiContamination}% (세척 필요)`),
+          feedbackMessage: aiData.feedbackMessage || `AI 분석 결과 총 오염도가 ${aiContamination}%로 측정되었습니다.`,
           rewardText: aiData.rewardText || (aiData.verdict === 'PLANT_SEEDLING' ? '새로운 묘목 1그루 획득!' : '물로 헹궈 다시 인증해보세요!'),
           penaltyText: aiData.penaltyText,
           carbonSavedGrams: Number(aiData.carbonSavedGrams) || (aiData.verdict === 'PLANT_SEEDLING' ? 120 : 0),
@@ -243,8 +249,9 @@ export async function analyzeRecyclingImage(
     categoryToleranceMultiplier = 0.9;
   }
 
-  const penalty = (redStainPercent * 2.2 + darkGrimePercent * 1.5) * categoryToleranceMultiplier;
-  let cleanlinessScore = Math.max(0, Math.min(100, Math.round(100 - penalty + (cleanRatio * 0.15))));
+  const rawContamination = Math.min(100, Math.round((redStainPercent * 0.7 + darkGrimePercent * 0.5) * categoryToleranceMultiplier));
+  const cleanlinessScore = Math.max(0, Math.min(100, 100 - rawContamination));
+  const contaminationPercent = Math.max(0, 100 - cleanlinessScore);
 
   let status: AnalysisOutput['status'];
   let verdict: AnalysisOutput['verdict'];
@@ -255,31 +262,27 @@ export async function analyzeRecyclingImage(
   let carbonSavedGrams = 0;
   let xpAwarded = 0;
 
-  if (cleanlinessScore >= 85) {
+  if (contaminationPercent <= 15) {
     status = 'PERFECT';
     verdict = 'PLANT_SEEDLING';
-    feedbackTitle = '🌟 완벽한 무결점 분리수거!';
-    feedbackMessage = category === 'tteokbokki_container' 
-      ? '엽떡통에 붉은 기름때 하나 없이 뽀송뽀송하게 세척되었습니다! 완벽한 에코 마스터입니다.'
-      : '이물질과 라벨이 전혀 없는 모범적인 분리수거 상태입니다.';
+    feedbackTitle = `🌟 총 오염도 ${contaminationPercent}% (무결점 세척)`;
+    feedbackMessage = '이물질과 얼룩이 전혀 없는 모범적인 분리수거 상태입니다. 완벽한 에코 마스터입니다!';
     rewardText = '새로운 묘목 1그루 심기 완료! (성장 속도 +15% 부스트)';
     carbonSavedGrams = 180;
     xpAwarded = 150;
-  } else if (cleanlinessScore >= 70) {
+  } else if (contaminationPercent <= 30) {
     status = 'CLEAN';
     verdict = 'PLANT_SEEDLING';
-    feedbackTitle = '🌱 깨끗하게 세척된 분리수거!';
+    feedbackTitle = `🌱 총 오염도 ${contaminationPercent}% (양호)`;
     feedbackMessage = '오염물질이 허용치 이하로 양호하게 분리배출되었습니다. 숲에 새로운 생명이 자라납니다.';
     rewardText = '새로운 묘목 1그루 획득!';
     carbonSavedGrams = 120;
     xpAwarded = 100;
-  } else if (cleanlinessScore >= 50) {
+  } else if (contaminationPercent <= 50) {
     status = 'SLIGHT_STAIN';
     verdict = 'CHOP_TREE';
-    feedbackTitle = '⚠️ 미세 오염 및 기름때 잔여물 감지';
-    feedbackMessage = category === 'tteokbokki_container'
-      ? '용기 모서리에 고추기름 흔적이 남아있습니다. 주방세제로 1회 더 헹구거나 햇빛에 반나절 말려주세요.'
-      : '내부에 음료 잔여물이나 스티커 흔적이 남아있어 재활용 공정에서 탈락될 수 있습니다.';
+    feedbackTitle = `⚠️ 총 오염도 ${contaminationPercent}% (세척 미흡)`;
+    feedbackMessage = '내부 잔여물이나 스티커/얼룩이 남아있어 재활용 공정에서 탈락될 수 있습니다. 1회 더 헹궈주세요.';
     penaltyText = '오염으로 인해 나무 1그루가 베어졌습니다. 🪓';
     rewardText = '다음엔 물과 세제로 한 번 더 헹궈주세요!';
     carbonSavedGrams = 20;
@@ -287,10 +290,8 @@ export async function analyzeRecyclingImage(
   } else {
     status = 'CONTAMINATED';
     verdict = 'CHOP_TREE';
-    feedbackTitle = '🚨 심각한 음식물/기름 오염물 검출!';
-    feedbackMessage = category === 'tteokbokki_container'
-      ? '빨간 양념과 기름기가 그대로 남아있습니다! 오염된 플라스틱은 재활용되지 못하고 전량 소각/매립됩니다.'
-      : '오염도가 너무 높아 재활용이 불가능합니다. 깨끗이 씻지 않은 쓰레기는 숲을 파괴합니다.';
+    feedbackTitle = `🚨 총 오염도 ${contaminationPercent}% (오염 심각)`;
+    feedbackMessage = '오염도가 너무 높아 재활용이 불가능합니다. 깨끗이 씻지 않은 쓰레기는 숲을 파괴합니다.';
     penaltyText = '오염된 쓰레기 배출로 나무 1그루가 벌목되었습니다! 🪓';
     rewardText = '베어진 나무는 밑동만 남게 됩니다.';
     carbonSavedGrams = 0;
@@ -301,11 +302,12 @@ export async function analyzeRecyclingImage(
 
   return {
     cleanlinessScore,
+    contaminationPercent,
     status,
     verdict,
-    redStainPercent,
-    darkGrimePercent,
-    surfaceUniformity: Math.max(0, 100 - redStainPercent - darkGrimePercent),
+    redStainPercent: contaminationPercent,
+    darkGrimePercent: 0,
+    surfaceUniformity: Math.max(0, 100 - contaminationPercent),
     feedbackTitle,
     feedbackMessage,
     rewardText,

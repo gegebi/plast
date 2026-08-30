@@ -11,10 +11,10 @@ interface CameraScannerProps {
 }
 
 const CATEGORIES: { id: ItemCategory; label: string; icon: string; hint: string }[] = [
-  { id: 'auto', label: 'AI 자동 감지', icon: '✨', hint: 'AI가 사진 속 품목(페트병, 배달용기, 캔 등)을 스스로 자동 인식합니다' },
-  { id: 'tteokbokki_container', label: '엽떡/배달용기', icon: '🍲', hint: '붉은 고추기름 및 양념 얼룩을 집중 검사합니다' },
+  { id: 'auto', label: 'AI 자동 감지', icon: '✨', hint: 'AI가 사진 속 품목(페트병, 배달용기, 컵, 캔 등)을 식별하고 총 오염도를 정밀 산출합니다' },
+  { id: 'tteokbokki_container', label: '배달/플라스틱 용기', icon: '🍲', hint: '음식물 잔여물 및 기름기 세척 여부를 집중 검사합니다' },
   { id: 'plastic_cup', label: '투명 일회용 컵', icon: '🥤', hint: '음료 잔여물 및 빨대/홀더 분리 여부 검사' },
-  { id: 'plastic_bottle', label: '투명 페트병', icon: '🍾', hint: '비닐 라벨 제거 및 깨끗한 압착 상태 검사' },
+  { id: 'plastic_bottle', label: '투명 페트병', icon: '🍾', hint: '비닐 라벨 제거 및 깨끗한 세척/압착 상태 검사' },
   { id: 'beverage_can', label: '음료 캔/알루미늄', icon: '🥫', hint: '내부 음료 찌꺼기 및 이물질 혼입 검사' },
   { id: 'paper_carton', label: '우유팩/종이류', icon: '📦', hint: '물 세척 후 펼쳐서 건조된 상태 검사' },
   { id: 'glass_bottle', label: '유리병', icon: '🍶', hint: '담배꽁초 등 이물질 및 뚜껑 분리 검사' },

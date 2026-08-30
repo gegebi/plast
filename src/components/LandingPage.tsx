@@ -309,7 +309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 "올바른 분리배출 실천에 대한 고유의 가치관과 자부심을 가진 친환경 실천가"
               </h3>
               <p className="text-xs sm:text-sm text-[#6B705C] mt-2 leading-relaxed">
-                단순히 쓰레기를 버리는 것을 넘어, 플라스틱 고추기름을 꼼꼼히 씻어내고 라벨을 분리하며 지구 환경 회복에 실질적으로 기여하고 싶은 모든 시민 실천가를 환영합니다.
+                단순히 쓰레기를 버리는 것을 넘어, 플라스틱 용기의 기름기와 이물질을 꼼꼼히 씻어내고 라벨을 분리하며 지구 환경 회복에 실질적으로 기여하고 싶은 모든 시민 실천가를 환영합니다.
               </p>
             </div>
           </div>
@@ -375,7 +375,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-3.5 h-3.5 text-[#7A9D54] shrink-0 mt-0.5" />
-                  <span>엽떡 고추기름, 라벨 미제거, 이물질 픽셀 비전 정밀 분석</span>
+                  <span>잔여 음식물, 라벨 미제거, 얼룩 종합 오염도 정밀 분석</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-3.5 h-3.5 text-[#7A9D54] shrink-0 mt-0.5" />

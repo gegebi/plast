@@ -379,16 +379,19 @@ export default function App() {
     const resolvedCategory: ItemCategory = (category === 'auto' ? (result.detectedCategory || 'general_plastic') : category);
     const resolvedItemName = result.detectedItem || categoryNames[resolvedCategory];
 
+    const contamination = result.contaminationPercent ?? (100 - result.cleanlinessScore);
+
     const newRecord: RecyclingRecord = {
       id: `rec_${Date.now()}`,
       timestamp: Date.now(),
       category: resolvedCategory,
       categoryName: resolvedItemName,
       cleanlinessScore: result.cleanlinessScore,
+      contaminationPercent: contamination,
       status: result.status,
       verdict: result.verdict,
-      redStainScore: result.redStainPercent,
-      darkGrimeScore: result.darkGrimePercent,
+      redStainScore: contamination,
+      darkGrimeScore: 0,
       cleanRatio: result.surfaceUniformity,
       imageUri: capturedImageUri,
       notes: result.feedbackMessage,
