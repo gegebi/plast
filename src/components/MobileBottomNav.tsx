@@ -3,6 +3,7 @@ import { Camera, TreePine, Mountain, Trophy, User } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { UserProfile } from '../types';
 import { MOUNTAIN_LEAGUES } from '../data/mountains';
+import { UserAvatar } from './UserAvatar';
 
 interface MobileBottomNavProps {
   user: UserProfile;
@@ -83,13 +84,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }}
           className="flex flex-col items-center gap-0.5 py-1 px-2.5 text-[#6B705C] hover:text-[#2D3319] transition-transform active:scale-90"
         >
-          <div className="w-5 h-5 rounded-full overflow-hidden border border-[#A3B18A] flex items-center justify-center bg-white">
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-3.5 h-3.5 text-[#4A7856]" />
-            )}
-          </div>
+          <UserAvatar 
+            avatar={user.avatarUrl} 
+            nickname={user.nickname} 
+            size="xs" 
+            className="w-5 h-5 border border-[#A3B18A]"
+          />
           <span className="text-[10px] font-bold">에코통계</span>
         </button>
       </div>

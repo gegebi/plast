@@ -149,7 +149,13 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
                   }`}
                 >
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-[#DDE5B6]">
-                    <img src={initialAvatarUrl} alt="Google Avatar" className="w-full h-full object-cover" />
+                    <img 
+                      src={initialAvatarUrl} 
+                      alt="Google Avatar" 
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                   <span className="text-[10px] font-bold text-[#2D3319] truncate">구글 사진</span>
                   {selectedAvatar === 'google' && (

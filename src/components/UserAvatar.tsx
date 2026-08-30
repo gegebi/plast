@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface UserAvatarProps {
   avatar?: string;
@@ -13,7 +13,14 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   className = '',
   size = 'md'
 }) => {
-  const isUrl = avatar && (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:image/'));
+  const [imageError, setImageError] = useState(false);
+
+  const isUrl = !imageError && avatar && (
+    avatar.startsWith('http://') || 
+    avatar.startsWith('https://') || 
+    avatar.startsWith('data:image/') ||
+    avatar.startsWith('/')
+  );
 
   const sizeClasses = {
     xs: 'w-6 h-6 text-xs',
@@ -31,26 +38,22 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         src={avatar}
         alt={nickname || '프로필'}
         referrerPolicy="no-referrer"
-        className={`${currentSizeClass} rounded-full object-cover border border-[#CCD5AE] shadow-xs shrink-0 ${className}`}
-        onError={(e) => {
-          // If image fails, replace with fallback
-          const target = e.currentTarget;
-          target.style.display = 'none';
-          if (target.parentElement) {
-            const fallback = document.createElement('span');
-            fallback.innerText = '🌱';
-            fallback.className = 'text-base';
-            target.parentElement.appendChild(fallback);
-          }
-        }}
+        crossOrigin="anonymous"
+        className={`${currentSizeClass} rounded-full object-cover border border-[#CCD5AE] shadow-xs shrink-0 select-none ${className}`}
+        onError={() => setImageError(true)}
       />
     );
   }
 
-  // Pure emoji or icon character
+  // Pure emoji, text icon or fallback
+  const displayContent = (!avatar || avatar.startsWith('http') || avatar.length > 4) 
+    ? (nickname ? nickname.slice(0, 1) : '🌱')
+    : avatar;
+
   return (
-    <div className={`${currentSizeClass} rounded-full bg-[#E9EDC9] border border-[#CCD5AE] flex items-center justify-center select-none shadow-xs shrink-0 ${className}`}>
-      <span>{avatar || '🌱'}</span>
+    <div className={`${currentSizeClass} rounded-full bg-[#E9EDC9] border border-[#CCD5AE] flex items-center justify-center font-bold text-[#4A5D23] select-none shadow-xs shrink-0 ${className}`}>
+      <span>{displayContent}</span>
     </div>
   );
 };
+

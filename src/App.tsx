@@ -242,7 +242,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [user, trees.length, growthMultiplier, firebaseUser]);
 
-  // Guest Mode Login Handler (Always fresh start, no persistence)
+  // Guest Mode Login Handler (Always fresh start with onboarding guide)
   const handleLogin = (nickname: string, avatarUrl?: string) => {
     // Clear any previous storage to guarantee a fresh start
     localStorage.removeItem(STORAGE_KEY_USER);
@@ -272,7 +272,7 @@ export default function App() {
       carbonSavedGrams: 0,
       recyclingStreakDays: 1,
       lastActiveTimestamp: Date.now(),
-      hasCompletedTutorial: true,
+      hasCompletedTutorial: false,
       isGuest: true,
       profileSetupCompleted: true,
       history: []
@@ -281,6 +281,7 @@ export default function App() {
     setUser(guestUser);
     setTrees([initialSeedling]);
     setCurrentView('HOME');
+    setIsTutorialOpen(true);
   };
 
   // Google Login Handler
@@ -610,6 +611,7 @@ export default function App() {
           <TutorialModal
             userNickname={user.nickname}
             onCompleteTutorial={handleCompleteTutorial}
+            onClose={() => setIsTutorialOpen(false)}
           />
         )}
       </div>
@@ -627,6 +629,7 @@ export default function App() {
         onOpenMountains={() => setIsMountainsOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenStats={() => setIsStatsOpen(true)}
+        onOpenGuide={() => setIsTutorialOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -747,6 +750,7 @@ export default function App() {
         <TutorialModal
           userNickname={user.nickname}
           onCompleteTutorial={handleCompleteTutorial}
+          onClose={() => setIsTutorialOpen(false)}
         />
       )}
     </div>

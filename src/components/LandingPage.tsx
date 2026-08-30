@@ -91,14 +91,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <img src="/favicon.svg" alt="Plast Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#2D3319] font-sans">
-                  Plast
-                </h1>
-                <span className="text-[10px] tracking-wider px-2 py-0.5 rounded-full bg-[#DDE5B6] text-[#4A5D23] font-extrabold uppercase">
-                  v2.0
-                </span>
-              </div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#2D3319] font-sans">
+                Plast
+              </h1>
               <p className="text-[11px] text-[#8C8F7A] font-semibold hidden sm:block">
                 친환경 실천 가시화 & 숲 가꾸기 챌린지
               </p>

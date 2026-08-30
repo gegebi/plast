@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Mountain, Trophy, Sparkles, User, TreePine, Flame, Leaf, UserX } from 'lucide-react';
+import { Camera, Mountain, Trophy, Sparkles, User, TreePine, Flame, Leaf, UserX, HelpCircle, BookOpen } from 'lucide-react';
 import { UserProfile } from '../types';
 import { MOUNTAIN_LEAGUES } from '../data/mountains';
 import { playSound } from '../utils/sound';
 import { sanitizeNickname } from '../utils/userUtils';
 import { firestoreService } from '../services/firestoreService';
+import { UserAvatar } from './UserAvatar';
 
 interface NavbarProps {
   user: UserProfile;
@@ -14,6 +15,7 @@ interface NavbarProps {
   onOpenMountains: () => void;
   onOpenLeaderboard: () => void;
   onOpenStats: () => void;
+  onOpenGuide?: () => void;
   onLogout: () => void;
 }
 
@@ -25,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenMountains,
   onOpenLeaderboard,
   onOpenStats,
+  onOpenGuide,
   onLogout
 }) => {
   const currentMountain = MOUNTAIN_LEAGUES[user.currentLeagueId] || MOUNTAIN_LEAGUES.namsan;
@@ -89,9 +92,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' 
                 : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'
             }`} />
-            <span className="text-xs font-semibold text-[#6B705C]">
-              {sanitizeNickname(user.nickname)}:
-            </span>
             {user.isGuest ? (
               <span className="text-xs font-bold text-amber-800 flex items-center gap-1">
                 게스트 모드
@@ -107,6 +107,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Forest Status & Tree Counter */}
         <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Guide / Tutorial Button */}
+          {onOpenGuide && (
+            <button
+              onClick={() => { playSound('click'); onOpenGuide(); }}
+              aria-label="이용 가이드 보기"
+              title="Plast 이용 가이드 보기"
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-white/80 hover:bg-[#E9EDC9] border border-[#E8E4D9] hover:border-[#CCD5AE] text-xs font-bold text-[#4A5D23] shadow-xs transition-colors cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#4A7856]" />
+              <span className="hidden sm:inline">가이드</span>
+            </button>
+          )}
+
           {/* Mountain Progress */}
           <button
             onClick={() => { playSound('click'); onOpenMountains(); }}
@@ -152,16 +165,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={() => { playSound('click'); onOpenStats(); }}
             aria-label="에코 통계 프로필"
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-[#E8E4D9] shadow-xs overflow-hidden hover:border-[#7A9D54] transition-all flex items-center justify-center text-xs font-bold text-[#3C4030]"
+            className="rounded-full hover:scale-105 active:scale-95 transition-all cursor-pointer"
           >
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-4 h-4 text-[#6B705C]" />
-            )}
+            <UserAvatar 
+              avatar={user.avatarUrl} 
+              nickname={user.nickname} 
+              size="sm" 
+              className="border-2 border-white hover:border-[#7A9D54] shadow-sm transition-all"
+            />
           </button>
         </div>
       </div>
     </header>
   );
 };
+
